@@ -631,11 +631,16 @@
         function clearAll() {
             if (!confirm('Clear all saved credentials? This cannot be undone.')) return;
             chrome.storage.local.clear(() => {
-                document.getElementById('status').innerText = '✓ All credentials cleared.';
-                document.getElementById('status').className = 'status-msg success';
+                const statusEl = document.getElementById('status');
+                statusEl.innerText = '✓ All credentials cleared.';
+                statusEl.className = 'status-msg success';
                 ['awsKey', 'awsSecret', 'azTenant', 'azClient', 'azSecret', 'azSub', 'gcpJson', 'gcpBillingId'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.value = '';
+                });
+                ['aws', 'azure', 'gcp'].forEach(p => {
+                    const b = document.getElementById(p + '-badge');
+                    if (b) { b.innerText = 'Not Connected'; b.className = 'section-badge badge-nc'; }
                 });
             });
         }
@@ -652,42 +657,6 @@
             });
         }
 
-        // Load saved values to show connection badges
-        chrome.storage.local.get(['cloudCreds', 'currency', 'isEncrypted', 'encryptedCreds'], (result) => {
-            if (result.currency) document.getElementById('currency').value = result.currency;
-            if (result.isEncrypted) document.getElementById('encryptStore').checked = true;
-
-            const creds = result.cloudCreds;
-            if (!creds) return;
-
-            if (creds.aws?.key) {
-                document.getElementById('awsKey').value = creds.aws.key;
-                document.getElementById('awsSecret').value = creds.aws.secret || '';
-                const b = document.getElementById('aws-badge');
-                b.innerText = '✓ Connected'; b.className = 'section-badge badge-connected';
-            }
-            if (creds.azure?.client) {
-                document.getElementById('azTenant').value = creds.azure.tenant || '';
-                document.getElementById('azClient').value = creds.azure.client || '';
-                document.getElementById('azSecret').value = creds.azure.secret || '';
-                document.getElementById('azSub').value = creds.azure.sub || '';
-                const b = document.getElementById('azure-badge');
-                b.innerText = '✓ Connected'; b.className = 'section-badge badge-connected';
-            }
-            if (creds.gcp?.json) {
-                document.getElementById('gcpJson').value = creds.gcp.json || '';
-                document.getElementById('gcpBillingId').value = creds.gcp.billingId || '';
-                const b = document.getElementById('gcp-badge');
-                b.innerText = '✓ Connected'; b.className = 'section-badge badge-connected';
-            }
-
-            if (result.encryptedCreds && !creds) {
-                ['aws', 'azure', 'gcp'].forEach(p => {
-                    const b = document.getElementById(`${p}-badge`);
-                    b.innerText = '🔐 Encrypted'; b.className = 'section-badge badge-warn';
-                });
-            }
-        });
     </script>
 </body>
 
