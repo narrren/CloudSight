@@ -5,6 +5,23 @@
     <h2>Cloud Credentials Setup</h2>
     <div id="status" style="color: green; font-weight: bold;"></div>
 
+    <!-- SETTINGS -->
+    <details>
+        <summary><strong>General Settings</strong></summary>
+        <label>Preferred Currency:</label>
+        <select id="currency" style="width: 100%; margin: 5px 0;">
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="INR">INR (₹)</option>
+            <option value="JPY">JPY (¥)</option>
+        </select>
+        <br>
+        <label><input type="checkbox" id="encryptStore"> Encrypt Storage (AES-GCM)</label>
+    </details>
+    <hr>
+
+
     <!-- AWS -->
     <details open>
         <summary><strong>AWS Configuration</strong></summary>

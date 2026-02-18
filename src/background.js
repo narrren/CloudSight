@@ -21,10 +21,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
+import { decryptData } from './cryptoUtils';
+
+// Hardcoded Exchange Rates (Base USD) - In V2, fetch from API
+const RATES = {
+    'USD': 1.0,
+    'EUR': 0.93,
+    'GBP': 0.79,
+    'INR': 83.5,
+    'JPY': 150.2
+};
+
 // 2. Main Fetch Logic
 async function fetchAllData() {
-    const result = await chrome.storage.local.get("cloudCreds");
-    const creds = result.cloudCreds || {};
+    const result = await chrome.storage.local.get(["cloudCreds", "encryptedCreds", "currency"]);
+
+    let creds = result.cloudCreds;
+    const currency = result.currency || 'USD';
+    const rate = RATES[currency] || 1.0;
+
+    // Handle Encryption
+    if (!creds && result.encryptedCreds) {
+        try {
+            creds = await decryptData(result.encryptedCreds);
+        } catch (e) {
+            console.error("Decryption failed in background", e);
+            return;
+        }
+    }
+
+    if (!creds) creds = {};
+
 
     // use Promise.allSettled to allow partial failures
     const results = await Promise.allSettled([
@@ -38,36 +65,42 @@ async function fetchAllData() {
     const azureData = results[1].status === 'fulfilled' ? results[1].value : { totalCost: 0, error: true };
     const gcpData = results[2].status === 'fulfilled' ? results[2].value : { totalCost: 0, error: true };
 
+    // Convert to User's Currency
+    const convert = (val) => val * rate;
+
     const combined = {
         aws: awsData,
         azure: azureData,
         gcp: gcpData,
-        // Only sum up valid numbers
-        totalGlobal: (awsData.totalCost || 0) + (azureData.totalCost || 0) + (gcpData.totalCost || 0),
-        lastUpdated: new Date().toISOString()
+        totalGlobal: convert((awsData.totalCost || 0) + (azureData.totalCost || 0) + (gcpData.totalCost || 0)),
+        lastUpdated: new Date().toISOString(),
+        currency: currency,
+        rate: rate // Store rate so popup knows
     };
 
-    // Check Budgets (Global Limit)
-    const GLOBAL_LIMIT = 1000;
+    // Check Budgets (Limit converted approx to $1000 USD)
+    const GLOBAL_LIMIT = 1000 * rate;
+
     if (combined.totalGlobal > GLOBAL_LIMIT) {
         chrome.notifications.create({
             type: 'basic',
             iconUrl: 'icon.png',
-            title: 'Global Budget Exceeded!',
-            message: `Total spend is $${combined.totalGlobal.toFixed(2)}`
+            title: `Global Budget Exceeded!`,
+            message: `Total spend is ${currency} ${combined.totalGlobal.toFixed(2)}`
         });
     }
 
-    // Check Anomalies
+    // Anomalies (AWS only for now)
     if (combined.aws && combined.aws.anomaly && combined.aws.anomaly.isAnomaly) {
+        // Note: Anomaly numbers are in USD inside the AWS object.
+        // We should convert them for the message
         chrome.notifications.create({
             type: 'basic',
             iconUrl: 'icon.png',
             title: 'AWS Cost Spike Detected!',
-            message: `Yesterday's spend ($${combined.aws.anomaly.today.toFixed(2)}) is >3x higher than average ($${combined.aws.anomaly.average.toFixed(2)}).`
+            message: `Yesterday's spend (${currency} ${convert(combined.aws.anomaly.today).toFixed(2)}) is >3x higher than average.`
         });
     }
-
 
     chrome.storage.local.set({ dashboardData: combined });
 }

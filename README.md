@@ -3,24 +3,25 @@
 CloudSight project repository: Cloud Command Center Chrome Extension.
 
 ## Overview
-A "Pro-Grade" Chrome Extension that visualizes **AWS, Azure, and Google Cloud (GCP)** Costs securely using official SDKs and direct API integrations.
+A "Pro-Grade" Chrome Extension that visualizes **AWS, Azure, and Google Cloud (GCP)** Costs securely using official SDKs and direct API integrations. It features a serverless architecture running entirely in the browser.
 
 ## Features
 - **Multi-Cloud Support**:
   - **AWS**: via Cost Explorer SDK (SigV4).
   - **Azure**: via Cost Management REST API (OAuth).
   - **GCP**: via Cloud Billing API (Signed JWTs).
-- **Secure Credentials Storage**: Access keys and Service Principals are stored locally and encrypted.
+- **Advanced Security**:
+  - **Encrypted Storage**: Uses AES-GCM (Web Crypto API) to encrypt credentials at rest.
+- **Global Currency Support**:
+  - View costs in USD, EUR, GBP, INR, or JPY.
+- **Smart Alerts**:
+  - **Budget Alerts**: Notifications when global spend exceeds limit.
+  - **Anomaly Detection**: AI-driven alerts for cost spikes (>3x average daily spend).
 - **Background Fetching**: Uses `chrome.alarms` to fetch data every 6 hours.
-- **Cost Visualization**: Unified dashboard aggregating costs from all providers.
-- **Budget Alerts**: Global threshold notifications.
 
 ## Installation
 
-### Prerequisites
-- Node.js and npm installed.
-
-### Setup
+### Method 1: Load Unpacked (Developer Mode)
 1. Clone the repository:
    ```bash
    git clone https://github.com/narrren/CloudSignt.git
@@ -34,18 +35,22 @@ A "Pro-Grade" Chrome Extension that visualizes **AWS, Azure, and Google Cloud (G
    ```bash
    npm run build
    ```
-   This will generate a `dist/` folder containing the extension.
+4. Open Chrome `chrome://extensions/`.
+5. Enable **Developer mode**.
+6. Click **Load unpacked** and select the `dist/` folder.
 
-### Loading into Chrome
-1. Open Chrome and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** (top right toggle).
-3. Click **Load unpacked**.
-4. Select the `dist/` folder inside the `CloudSight` project directory.
-5. The extension "Cloud Command Center" should appear.
+### Method 2: Install via ZIP (Distribution)
+1. build the project or download `CloudCommandCenter.zip`.
+2. Extract the zip file.
+3. Load the extracted folder via Chrome's "Load unpacked" button.
 
 ## Configuration
 1. Click the extension icon and go to **Options**.
-2. **AWS**: Enter Access Key ID and Secret Access Key (Read Only permissions required).
-3. **Azure**: Enter Tenant ID, Client ID, Client Secret, and Subscription ID (Service Principal with Cost Management Reader role).
-4. **GCP**: Paste the full JSON content of your Service Account Key (Billing Viewer role) and your Billing Account ID.
-5. Save. The extension will fetch and aggregate data in the background.
+2. **General Settings**: Select your preferred currency and enable encryption.
+3. Enter credentials for your cloud providers (AWS, Azure, GCP).
+4. Save.
+
+## Architecture
+- **Manifest V3**: Secure and performant extension architecture.
+- **Webpack**: Bundles modular code (AWS SDK, Jose, Chart.js) for the browser.
+- **Service Worker**: Handles background fetching, encryption, and notifications.

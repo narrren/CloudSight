@@ -14,18 +14,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-
         // 1. Text Updates
-        document.getElementById('total-cost').innerText = `$${data.totalGlobal.toFixed(2)}`;
+        // Use stored currency and rate
+        const currency = data.currency || 'USD';
+        const rate = data.rate || 1.0;
+        const convert = (val) => val * rate;
+
+        // Total Cost (already converted in background.js, or we convert here if not)
+        // Background sets data.totalGlobal = convert(...)
+        document.getElementById('total-cost').innerText = `${currency} ${data.totalGlobal.toFixed(2)}`;
 
         // Calculate Total Forecast
+        // Note: Forecasts are raw numbers from APIs (USD or native), need manual conversion here.
         const awsForecast = data.aws ? parseFloat(data.aws.forecast) : 0;
         const azureForecast = data.azure ? parseFloat(data.azure.forecast) : 0;
         const gcpForecast = data.gcp ? parseFloat(data.gcp.forecast) : 0;
 
-        const totalForecast = awsForecast + azureForecast + gcpForecast;
-        document.getElementById('forecast-cost').innerText = `$${totalForecast.toFixed(2)}`;
-        document.getElementById('last-sync').innerText = result.dashboardData.lastUpdated ? new Date(result.dashboardData.lastUpdated).toLocaleTimeString() : "Never";
+        const totalForecast = convert(awsForecast + azureForecast + gcpForecast);
+        document.getElementById('forecast-cost').innerText = `${currency} ${totalForecast.toFixed(2)}`;
+
+        document.getElementById('last-sync').innerText = data.lastUpdated
+            ? new Date(data.lastUpdated).toLocaleTimeString()
+            : "Never";
 
         // 2. Chart: Provider Breakdown
         const ctx = document.getElementById('serviceChart').getContext('2d');
@@ -35,9 +45,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const values = [];
         const colors = [];
 
-        if (data.aws && data.aws.totalCost > 0) { labels.push('AWS'); values.push(data.aws.totalCost); colors.push('#FF9900'); }
-        if (data.azure && data.azure.totalCost > 0) { labels.push('Azure'); values.push(data.azure.totalCost); colors.push('#0078D4'); }
-        if (data.gcp && data.gcp.totalCost > 0) { labels.push('GCP'); values.push(data.gcp.totalCost); colors.push('#4285F4'); }
+        // Values for chart should be in user currency
+        if (data.aws && data.aws.totalCost > 0) {
+            labels.push('AWS');
+            values.push(convert(data.aws.totalCost));
+            colors.push('#FF9900');
+        }
+        if (data.azure && data.azure.totalCost > 0) {
+            labels.push('Azure');
+            values.push(convert(data.azure.totalCost));
+            colors.push('#0078D4');
+        }
+        if (data.gcp && data.gcp.totalCost > 0) {
+            labels.push('GCP');
+            values.push(convert(data.gcp.totalCost));
+            colors.push('#4285F4');
+        }
 
         // If no cost, show empty state
         if (labels.length === 0) {
