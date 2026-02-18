@@ -58,6 +58,17 @@ async function fetchAllData() {
         });
     }
 
+    // Check Anomalies
+    if (combined.aws && combined.aws.anomaly && combined.aws.anomaly.isAnomaly) {
+        chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icon.png',
+            title: 'AWS Cost Spike Detected!',
+            message: `Yesterday's spend ($${combined.aws.anomaly.today.toFixed(2)}) is >3x higher than average ($${combined.aws.anomaly.average.toFixed(2)}).`
+        });
+    }
+
+
     chrome.storage.local.set({ dashboardData: combined });
 }
 
@@ -91,18 +102,54 @@ async function fetchAWS(creds) {
         Granularity: "MONTHLY"
     });
 
-    const [costResponse, forecastResponse] = await Promise.all([
+    const [costResponse, forecastResponse, historyResponse] = await Promise.all([
         client.send(costCommand),
-        client.send(forecastCommand)
+        client.send(forecastCommand),
+        fetchAWSHistory(client)
     ]);
+
+    const anomaly = detectAnomaly(historyResponse);
 
     return {
         provider: 'AWS',
         totalCost: calculateTotal(costResponse),
         services: processServices(costResponse),
         forecast: forecastResponse.Total.Amount,
-        unit: forecastResponse.Total.Unit
+        unit: forecastResponse.Total.Unit,
+        anomaly: anomaly
     };
+}
+
+async function fetchAWSHistory(client) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 14); // 2 weeks history
+
+    const command = new GetCostAndUsageCommand({
+        TimePeriod: { Start: start.toISOString().split('T')[0], End: end.toISOString().split('T')[0] },
+        Granularity: "DAILY",
+        Metrics: ["UnblendedCost"]
+    });
+    return client.send(command);
+}
+
+function detectAnomaly(historyResponse) {
+    const dailyCosts = historyResponse.ResultsByTime.map(r => parseFloat(r.Total.UnblendedCost.Amount));
+    if (dailyCosts.length < 3) return null;
+
+    // Last day is "today" or "yesterday", let's check the most recent complete day
+    const latestCost = dailyCosts[dailyCosts.length - 1];
+    const previousCosts = dailyCosts.slice(0, dailyCosts.length - 1);
+
+    // Calculate Average
+    const sum = previousCosts.reduce((a, b) => a + b, 0);
+    const avg = sum / previousCosts.length;
+
+    // Simple Spike Detection (3x Average)
+    if (latestCost > (avg * 3) && latestCost > 1.0) { // Ignore small amounts
+        return { isAnomaly: true, today: latestCost, average: avg };
+    }
+    return null;
 }
 
 // Helper: Process AWS JSON into Chart.js format
