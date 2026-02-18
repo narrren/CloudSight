@@ -143,104 +143,109 @@ async function fetchAllData() {
 
 // 3. AWS Implementation
 async function fetchAWS(creds) {
+    if (!creds.key || !creds.secret) {
+        throw new Error('AWS credentials missing (key or secret is empty)');
+    }
+
     const client = new CostExplorerClient({
-        region: "us-east-1", // Cost Explorer is global but endpoint is usually us-east-1
+        region: "us-east-1",
         credentials: {
-            accessKeyId: creds.key,
-            secretAccessKey: creds.secret
+            accessKeyId: creds.key.trim(),
+            secretAccessKey: creds.secret.trim()
         }
     });
 
-    // A. Get Current Month Costs + Service Breakdown
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
     const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString().split('T')[0];
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
 
-    const costCommand = new GetCostAndUsageCommand({
-        TimePeriod: { Start: firstDay, End: tomorrow },
-        Granularity: "MONTHLY",
-        Metrics: ["UnblendedCost"],
-        GroupBy: [{ Type: "DIMENSION", Key: "SERVICE" }]
-    });
+    // ── A. Current month cost (critical — throw on failure) ───────────────
+    let costResponse;
+    try {
+        costResponse = await client.send(new GetCostAndUsageCommand({
+            TimePeriod: { Start: firstDay, End: tomorrow },
+            Granularity: "MONTHLY",
+            Metrics: ["UnblendedCost"],
+            GroupBy: [{ Type: "DIMENSION", Key: "SERVICE" }]
+        }));
+    } catch (e) {
+        const msg = e?.message || e?.name || String(e);
+        throw new Error(msg);
+    }
 
-    // B. Get Forecast
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-    const forecastCommand = new GetCostForecastCommand({
-        TimePeriod: { Start: tomorrow, End: lastDayOfMonth },
-        Metric: "UNBLENDED_COST",
-        Granularity: "MONTHLY"
-    });
+    // ── B. Forecast (optional — new accounts often lack enough data) ──────
+    let forecastTotal = '0';
+    try {
+        if (tomorrow <= lastDay) {
+            const fr = await client.send(new GetCostForecastCommand({
+                TimePeriod: { Start: tomorrow, End: lastDay },
+                Metric: "UNBLENDED_COST",
+                Granularity: "MONTHLY"
+            }));
+            forecastTotal = fr.Total?.Amount || '0';
+        }
+    } catch (e) {
+        console.warn('AWS Forecast skipped (normal for new accounts):', e?.message);
+    }
 
-    const [costResponse, forecastResponse, historyResponse] = await Promise.all([
-        client.send(costCommand),
-        client.send(forecastCommand),
-        fetchAWSHistory(client)
-    ]);
-
-    const anomaly = detectAnomaly(historyResponse);
-
-    // Process History for Charting
-    const history = historyResponse.ResultsByTime.map(r => ({
-        date: r.TimePeriod.Start,
-        cost: parseFloat(r.Total.UnblendedCost.Amount)
-    }));
+    // ── C. 14-day daily history (optional) ───────────────────────────
+    let history = [];
+    try {
+        const histStart = new Date();
+        histStart.setDate(histStart.getDate() - 14);
+        const hr = await client.send(new GetCostAndUsageCommand({
+            TimePeriod: { Start: histStart.toISOString().split('T')[0], End: todayStr },
+            Granularity: "DAILY",
+            Metrics: ["UnblendedCost"]
+        }));
+        history = (hr.ResultsByTime || []).map(r => ({
+            date: r.TimePeriod.Start,
+            cost: parseFloat(r.Total?.UnblendedCost?.Amount || 0)
+        }));
+    } catch (e) {
+        console.warn('AWS history skipped:', e?.message);
+    }
 
     return {
         provider: 'AWS',
         totalCost: calculateTotal(costResponse),
         services: processServices(costResponse),
-        forecast: forecastResponse.Total.Amount,
-        unit: forecastResponse.Total.Unit,
-        anomaly: anomaly,
+        forecast: forecastTotal,
+        anomaly: detectAnomaly(history),
         history: history
     };
-
 }
 
-async function fetchAWSHistory(client) {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 14); // 2 weeks history
 
-    const command = new GetCostAndUsageCommand({
-        TimePeriod: { Start: start.toISOString().split('T')[0], End: end.toISOString().split('T')[0] },
-        Granularity: "DAILY",
-        Metrics: ["UnblendedCost"]
-    });
-    return client.send(command);
-}
-
-function detectAnomaly(historyResponse) {
-    const dailyCosts = historyResponse.ResultsByTime.map(r => parseFloat(r.Total.UnblendedCost.Amount));
-    if (dailyCosts.length < 3) return null;
-
-    // Last day is "today" or "yesterday", let's check the most recent complete day
+function detectAnomaly(history) {
+    // history is now a plain array of { date, cost }
+    if (!history || history.length < 3) return null;
+    const dailyCosts = history.map(h => h.cost);
     const latestCost = dailyCosts[dailyCosts.length - 1];
     const previousCosts = dailyCosts.slice(0, dailyCosts.length - 1);
-
-    // Calculate Average
-    const sum = previousCosts.reduce((a, b) => a + b, 0);
-    const avg = sum / previousCosts.length;
-
-    // Simple Spike Detection (3x Average)
-    if (latestCost > (avg * 3) && latestCost > 1.0) { // Ignore small amounts
+    const avg = previousCosts.reduce((a, b) => a + b, 0) / previousCosts.length;
+    if (latestCost > (avg * 3) && latestCost > 1.0) {
         return { isAnomaly: true, today: latestCost, average: avg };
     }
     return null;
 }
 
-// Helper: Process AWS JSON into Chart.js format
 function processServices(response) {
-    // AWS returns an array of services. Sort by cost and take top 5.
-    const groups = response.ResultsByTime[0].Groups;
+    const results = response?.ResultsByTime;
+    if (!results || results.length === 0) return [];
+    const groups = results[0]?.Groups || [];
     return groups
         .map(g => ({ name: g.Keys[0], amount: parseFloat(g.Metrics.UnblendedCost.Amount) }))
+        .filter(s => s.amount > 0)
         .sort((a, b) => b.amount - a.amount)
-        .slice(0, 5); // Top 5 services
+        .slice(0, 5);
 }
 
 function calculateTotal(response) {
-    // Sum up all groups
-    return response.ResultsByTime[0].Groups
-        .reduce((acc, curr) => acc + parseFloat(curr.Metrics.UnblendedCost.Amount), 0);
+    const results = response?.ResultsByTime;
+    if (!results || results.length === 0) return 0;
+    const groups = results[0]?.Groups || [];
+    return groups.reduce((acc, curr) => acc + parseFloat(curr.Metrics.UnblendedCost.Amount), 0);
 }
