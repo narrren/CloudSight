@@ -68,7 +68,7 @@
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-1.5 px-2 py-1 bg-slate-800/40 rounded border border-white/5">
           <!-- AWS -->
-          <div class="size-4 cursor-pointer hover:opacity-80 transition-opacity" title="AWS Active">
+          <div id="filter-aws" class="size-4 cursor-pointer hover:opacity-80 transition-opacity" title="AWS Active">
             <svg viewBox="0 0 24 24" fill="none" class="w-full h-full">
               <rect x="2" y="2" width="20" height="20" rx="4" fill="#FF9900" />
               <path d="M7 12L10 15L17 8" stroke="white" stroke-width="2" stroke-linecap="round"
@@ -76,14 +76,16 @@
             </svg>
           </div>
           <!-- Azure -->
-          <div class="size-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
+          <div id="filter-azure"
+            class="size-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
             title="Azure Paused">
             <svg viewBox="0 0 24 24" fill="none" class="w-full h-full">
               <path d="M5 19L10 4L15 19H5Z" fill="#0078D4" />
             </svg>
           </div>
           <!-- GCP -->
-          <div class="size-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
+          <div id="filter-gcp"
+            class="size-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
             title="GCP Off">
             <svg viewBox="0 0 24 24" fill="none" class="w-full h-full">
               <circle cx="12" cy="12" r="9" fill="#DB4437" />

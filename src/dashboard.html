@@ -46,6 +46,7 @@
 
         .text-gradient {
             background: linear-gradient(to right, #ffffff, #8A8F98);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -243,7 +244,7 @@
                     </div>
                     <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Total Spend (MTD)</p>
                     <div class="mt-4 flex items-baseline gap-2">
-                        <h3 class="text-3xl font-bold text-white tracking-tight">$12,450</h3>
+                        <h3 id="kpi-total-spend" class="text-3xl font-bold text-white tracking-tight">$0.00</h3>
                         <span class="text-sm font-medium text-muted-text">.00</span>
                     </div>
                     <div class="mt-4 flex items-center gap-2">
@@ -261,7 +262,7 @@
                     </div>
                     <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Forecasted Spend</p>
                     <div class="mt-4 flex items-baseline gap-2">
-                        <h3 class="text-3xl font-bold text-white tracking-tight">$14,200</h3>
+                        <h3 id="kpi-forecast" class="text-3xl font-bold text-white tracking-tight">$0.00</h3>
                         <span class="text-sm font-medium text-muted-text">.00</span>
                     </div>
                     <div class="mt-4 flex items-center gap-2">
@@ -281,7 +282,7 @@
                             <span class="material-symbols-outlined text-[14px]">savings</span> Potential Savings
                         </p>
                         <div class="mt-4 flex items-baseline gap-2">
-                            <h3 class="text-3xl font-bold text-white tracking-tight">$845<span
+                            <h3 id="kpi-savings" class="text-3xl font-bold text-white tracking-tight">$0<span
                                     class="text-lg text-slate-400 font-medium">/mo</span></h3>
                         </div>
                         <p class="mt-4 text-[11px] text-muted-text">3 Idle Instances, 14 Unattached Volumes</p>
@@ -340,18 +341,23 @@
                         <div
                             class="absolute inset-0 flex flex-col justify-between pointer-events-none text-xs text-muted-text/30 font-mono">
                             <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$2000</span></div>
+                                <span>$2000</span>
+                            </div>
                             <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$1500</span></div>
+                                <span>$1500</span>
+                            </div>
                             <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$1000</span></div>
+                                <span>$1000</span>
+                            </div>
                             <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$500</span></div>
+                                <span>$500</span>
+                            </div>
                             <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$0</span></div>
+                                <span>$0</span>
+                            </div>
                         </div>
-                        <svg class="h-full w-full overflow-visible absolute inset-0" preserveAspectRatio="none"
-                            viewBox="0 0 1000 320">
+                        <svg id="trend-chart-svg" class="h-full w-full overflow-visible absolute inset-0"
+                            preserveAspectRatio="none" viewBox="0 0 1000 320">
                             <defs>
                                 <linearGradient id="gradTotal" x1="0" x2="0" y1="0" y2="1">
                                     <stop offset="0%" stop-color="#6366F1" stop-opacity="0.25"></stop>
@@ -407,7 +413,7 @@
                     <h3 class="text-lg font-semibold text-white mb-2">Provider Distribution</h3>
                     <div class="flex flex-col items-center justify-center relative py-6">
                         <div class="relative h-48 w-48">
-                            <svg class="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
+                            <svg id="donut-chart-svg" class="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" fill="none" r="15.915" stroke="#1F2430" stroke-width="3">
                                 </circle>
                                 <circle class="transition-all hover:stroke-[#FF9900]" cx="18" cy="18" fill="none"
@@ -422,7 +428,8 @@
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
                                 <span class="text-xs text-muted-text uppercase tracking-wider font-medium">Total
                                     Spend</span>
-                                <span class="text-2xl font-bold text-white tracking-tight mt-1">$12.4k</span>
+                                <span id="donut-total-text"
+                                    class="text-2xl font-bold text-white tracking-tight mt-1">$0</span>
                             </div>
                         </div>
                     </div>
@@ -447,7 +454,7 @@
                         <button class="text-xs text-primary hover:text-white font-medium transition-colors">View
                             Report</button>
                     </div>
-                    <div class="space-y-6">
+                    <div id="top-services-list" class="space-y-6">
                         <div class="group">
                             <div class="flex justify-between items-center text-sm mb-2">
                                 <div class="flex items-center gap-3">
