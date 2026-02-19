@@ -1,314 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>CloudSight Popup Command Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#6366F1", "background-dark": "#0F172A",
+            "card-dark": "#0F172A",
+            "card-border": "#1E293B",
+            "card-hover": "#1E293B",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          boxShadow: {
+            "glow": "0 0 15px rgba(99, 102, 241, 0.15)",
+            "inner-subtle": "inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)"
+          }
+        },
+      },
+    }
+  </script>
   <style>
-    :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --aws: #FF9900;
-      --azure: #0078D4;
-      --gcp: #4285F4;
-      --green: #3fb950;
-      --red: #f85149;
-      --yellow: #d29922;
+    ::-webkit-scrollbar {
+      width: 4px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    ::-webkit-scrollbar-track {
+      background: #0F172A;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
     }
 
     body {
-      width: 360px;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #000;
+      margin: 0;
       padding: 0;
+      font-family: 'Inter', sans-serif;
+      width: 380px;
     }
 
-    /* Header */
-    .header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-logo {
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .header-sync {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    /* Body */
-    .body {
-      padding: 14px;
+    .extension-popup {
+      width: 100%;
+      height: 600px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 12px;
     }
 
-    /* Hero */
-    .hero {
-      background: linear-gradient(135deg, #1c2128, #21262d);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-    }
-
-    .hero-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
-    }
-
-    .hero-value {
-      font-size: 34px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .hero-sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .hero-sub span {
-      color: #bc8cff;
-      font-weight: 600;
-    }
-
-    /* KPI Row */
-    .kpi-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .kpi-mini {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-    }
-
-    .kpi-mini-label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .kpi-mini-value {
-      font-size: 16px;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-
-    /* Chart */
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-    }
-
-    .chart-card h4 {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 10px;
-    }
-
-    .chart-wrap {
-      position: relative;
-      height: 160px;
-    }
-
-    /* Provider Pills */
-    .provider-row {
-      display: flex;
-      gap: 6px;
-    }
-
-    .provider-pill {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 11px;
-    }
-
-    .provider-pill .p-name {
-      color: var(--muted);
-      margin-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .provider-pill .p-val {
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    /* Alert Banner */
-    .alert-banner {
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .alert-banner.warn {
-      background: rgba(210, 153, 34, 0.12);
-      border: 1px solid rgba(210, 153, 34, 0.3);
-    }
-
-    .alert-banner.danger {
-      background: rgba(248, 81, 73, 0.12);
-      border: 1px solid rgba(248, 81, 73, 0.3);
-    }
-
-    .alert-banner.ok {
-      background: rgba(63, 185, 80, 0.12);
-      border: 1px solid rgba(63, 185, 80, 0.3);
-      color: var(--green);
-    }
-
-    /* Footer */
-    .footer {
-      display: flex;
-      gap: 6px;
-      padding: 0 0 2px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 9px;
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s;
-    }
-
-    .btn:hover {
-      opacity: 0.85;
-    }
-
-    .btn-primary {
-      background: #238636;
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
+    .text-glow {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
     }
   </style>
 </head>
 
-<body>
+<body class="font-display text-slate-200">
+  <div class="extension-popup bg-background-dark border border-slate-800 relative">
+    <header
+      class="flex items-center justify-between px-5 py-3 border-b border-card-border bg-[#0F172A]/95 backdrop-blur-sm sticky top-0 z-20">
+      <div class="flex items-center gap-2">
+        <div class="size-6 rounded bg-primary/20 flex items-center justify-center text-indigo-400">
+          <svg fill="none" height="14" viewBox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5Z"
+              stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            <path d="M7 12L12 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            </path>
+          </svg>
+        </div>
+        <span class="text-sm font-semibold text-white tracking-tight">CloudSight</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 px-2 py-1 bg-slate-800/40 rounded border border-white/5">
+          <div id="badge-aws" class="size-4 grayscale opacity-40 hover:opacity-100 transition-all cursor-pointer"
+            title="AWS">
+            <svg fill="#FF9900" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+              <path d="M2 17L12 22L22 17"></path>
+              <path d="M2 12L12 17L22 12"></path>
+            </svg>
+          </div>
+          <div id="badge-azure"
+            class="size-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
+            title="Azure">
+            <svg fill="#0078D4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <rect height="9" width="9" x="2" y="2"></rect>
+              <rect height="9" width="9" x="13" y="2"></rect>
+              <rect height="9" width="9" x="2" y="13"></rect>
+              <rect height="9" width="9" x="13" y="13"></rect>
+            </svg>
+          </div>
+          <div id="badge-gcp" class="size-4 grayscale opacity-40 hover:opacity-100 transition-all cursor-pointer"
+            title="GCP">
+            <svg fill="#4285F4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="h-4 w-px bg-slate-700"></div>
+        <span id="currency-display" class="text-[11px] font-medium text-slate-400">USD</span>
+        <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-[18px]">settings</span>
+        </button>
+      </div>
+    </header>
 
-  <div class="header">
-    <div class="header-logo">☁️ CloudSight</div>
-    <div class="header-sync" id="sync-time">–</div>
+    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-[#0F172A]">
+      <div class="p-5 flex flex-col gap-5">
+        <div class="flex flex-col gap-1 relative z-10 text-center pt-2">
+          <span class="text-slate-400 text-[11px] font-medium uppercase tracking-widest">Month-to-Date Spend</span>
+          <h2 id="total-spend"
+            class="text-[40px] font-semibold text-white tracking-tighter text-glow mt-1 leading-none font-display">--
+          </h2>
+          <div class="flex items-center justify-center gap-2 mt-2">
+            <span
+              class="bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded text-[11px] font-medium border border-indigo-500/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+              Current Month
+            </span>
+          </div>
+        </div>
+
+        <div class="relative h-28 w-full -mx-2 -mt-2">
+          <!-- Placeholder SVG chart for now, functional if possible later -->
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/10 to-transparent z-10 pointer-events-none">
+          </div>
+          <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 380 100">
+            <defs>
+              <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#6366F1" stop-opacity="0.4"></stop>
+                <stop offset="100%" stop-color="#6366F1" stop-opacity="0"></stop>
+              </linearGradient>
+            </defs>
+            <path d="M0 80 C 40 75, 50 60, 90 65 S 150 40, 190 55 S 250 30, 300 45 S 350 20, 380 40 V 100 H 0 Z"
+              fill="url(#chartGradient)"></path>
+            <path d="M0 80 C 40 75, 50 60, 90 65 S 150 40, 190 55 S 250 30, 300 45 S 350 20, 380 40" fill="none"
+              stroke="#818CF8" stroke-linecap="round" stroke-width="2"></path>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 -mt-4">
+          <div
+            class="bg-[#0F172A] rounded-lg p-4 border border-card-border shadow-inner-subtle hover:border-slate-600 transition-colors group">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Forecast</span>
+              <span
+                class="material-symbols-outlined text-slate-600 text-[16px] group-hover:text-indigo-400 transition-colors">insights</span>
+            </div>
+            <p id="forecast-spend" class="text-white text-xl font-bold tracking-tight">--</p>
+            <span class="text-emerald-400 text-[10px] font-medium flex items-center gap-1 mt-1">
+              End of Month
+            </span>
+          </div>
+          <div
+            class="bg-[#0F172A] rounded-lg p-4 border border-card-border shadow-inner-subtle hover:border-slate-600 transition-colors group relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-12 h-12 bg-rose-500/10 rounded-full blur-xl"></div>
+            <div class="flex justify-between items-start mb-2 relative z-10">
+              <span class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Alerts</span>
+              <div id="alert-indicator"
+                class="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                style="display:none"></div>
+            </div>
+            <p id="alert-count" class="text-white text-xl font-bold tracking-tight relative z-10">0</p>
+            <span id="alert-status-text" class="text-slate-500 text-[10px] font-medium mt-1 block relative z-10">
+              All systems normal
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 pt-2">
+          <div class="flex justify-between items-center">
+            <h3 class="text-slate-300 text-xs font-semibold">Active Providers</h3>
+          </div>
+          <div class="space-y-2" id="provider-list">
+            <!-- Dynamic Content Will Be Injected Here via popup.js -->
+            <div class="text-center text-xs text-slate-500 py-2">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-5 pt-4 bg-[#0F172A] border-t border-card-border flex flex-col gap-4 sticky bottom-0 z-20">
+      <button id="btn-open-dashboard"
+        class="w-full bg-slate-100 hover:bg-white hover:-translate-y-0.5 active:translate-y-0 text-slate-900 font-bold py-2.5 rounded text-xs transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-white/5">
+        <span>Open Full Dashboard</span>
+        <span class="material-symbols-outlined text-[16px]">arrow_outward</span>
+      </button>
+      <div class="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+        <span class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[12px] text-emerald-500">lock</span>
+          AES-GCM Encrypted
+        </span>
+        <span class="opacity-60">Client-Side Only</span>
+      </div>
+    </div>
   </div>
-
-  <div class="body">
-
-    <!-- Alert Banner -->
-    <div class="alert-banner ok" id="alert-banner">
-      <span>✅</span><span id="alert-text">All systems normal</span>
-    </div>
-
-    <!-- Hero -->
-    <div class="hero">
-      <div class="hero-label">Total Spend (MTD)</div>
-      <div class="hero-value" id="total-cost">Loading…</div>
-      <div class="hero-sub">Forecast: <span id="forecast-cost">–</span></div>
-    </div>
-
-    <!-- KPI Row -->
-    <div class="kpi-row">
-      <div class="kpi-mini">
-        <div class="kpi-mini-label">Budget Used</div>
-        <div class="kpi-mini-value" id="budget-pct" style="color:var(--green)">–</div>
-      </div>
-      <div class="kpi-mini">
-        <div class="kpi-mini-label">Active Alerts</div>
-        <div class="kpi-mini-value" id="alert-count" style="color:var(--yellow)">0</div>
-      </div>
-    </div>
-
-    <!-- Provider Pills -->
-    <div class="provider-row">
-      <div class="provider-pill">
-        <div class="p-name"><span class="dot" style="background:var(--aws)"></span> AWS</div>
-        <div class="p-val" id="aws-cost">–</div>
-      </div>
-      <div class="provider-pill">
-        <div class="p-name"><span class="dot" style="background:var(--azure)"></span> Azure</div>
-        <div class="p-val" id="azure-cost">–</div>
-      </div>
-      <div class="provider-pill">
-        <div class="p-name"><span class="dot" style="background:var(--gcp)"></span> GCP</div>
-        <div class="p-val" id="gcp-cost">–</div>
-      </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="chart-card">
-      <h4>Spend by Provider</h4>
-      <div class="chart-wrap">
-        <canvas id="serviceChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Footer Buttons -->
-    <div class="footer">
-      <button class="btn btn-primary" id="open-dashboard">📊 Full Dashboard</button>
-      <button class="btn btn-secondary" id="open-options">⚙ Settings</button>
-    </div>
-
-  </div>
-
   <script src="popup.js"></script>
 </body>
 

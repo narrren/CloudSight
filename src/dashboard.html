@@ -1,822 +1,378 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cloud Command Center – Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>CloudSight Enterprise Dashboard</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5E6AD2", "background-light": "#ffffff",
+                        "background-dark": "#0B0E14", "card-dark": "#151921", "border-dark": "#272B36", "aws": "#FF9900",
+                        "azure": "#0078D4",
+                        "gcp": "#DB4437",
+                        "muted-text": "#8A8F98",
+                        "highlight": "#E0E6ED",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        "glow": "0 0 20px rgba(94, 106, 210, 0.15)",
+                        "glass": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+                    },
+                    backgroundImage: {
+                        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+                        "subtle-grid": "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23272B36' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E\")",
+                    }
+                },
+            },
+        }
+    </script>
     <style>
-        :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --surface2: #21262d;
-            --border: #30363d;
-            --text: #e6edf3;
-            --muted: #8b949e;
-            --aws: #FF9900;
-            --azure: #0078D4;
-            --gcp: #4285F4;
-            --green: #3fb950;
-            --red: #f85149;
-            --yellow: #d29922;
-            --purple: #bc8cff;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 0;
+            background-image: radial-gradient(circle at 50% 0%, #1a1f2e 0%, #0B0E14 60%);
         }
 
-        /* ── Sidebar ── */
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 220px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-        }
-
-        .sidebar-logo {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sidebar-logo span {
-            font-size: 22px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--muted);
-            transition: all 0.15s;
-            text-decoration: none;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: var(--surface2);
-            color: var(--text);
-        }
-
-        .nav-section {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 16px 12px 6px;
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        /* ── Main Content ── */
-        .main {
-            margin-left: 220px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .topbar {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .topbar-title {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .badge {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .btn {
-            background: #238636;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 7px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        .btn:hover {
-            background: #2ea043;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 6px;
-            padding: 7px 16px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .btn-outline:hover {
-            background: var(--surface2);
-        }
-
-        /* ── Content Area ── */
-        .content {
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* ── KPI Cards ── */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-        }
-
-        .kpi-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-        }
-
-        .kpi-card.green::before {
-            background: var(--green);
-        }
-
-        .kpi-card.red::before {
-            background: var(--red);
-        }
-
-        .kpi-card.yellow::before {
-            background: var(--yellow);
-        }
-
-        .kpi-card.blue::before {
-            background: #58a6ff;
-        }
-
-        .kpi-card.purple::before {
-            background: var(--purple);
-        }
-
-        .kpi-card.aws-card::before {
-            background: var(--aws);
-        }
-
-        .kpi-card.azure-card::before {
-            background: var(--azure);
-        }
-
-        .kpi-card.gcp-card::before {
-            background: var(--gcp);
-        }
-
-        .kpi-label {
-            font-size: 12px;
-            color: var(--muted);
-            font-weight: 500;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .kpi-value {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1;
-        }
-
-        .kpi-sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 6px;
-        }
-
-        .kpi-trend {
-            font-size: 12px;
-            margin-top: 6px;
-            font-weight: 500;
-        }
-
-        .kpi-trend.up {
-            color: var(--red);
-        }
-
-        .kpi-trend.down {
-            color: var(--green);
-        }
-
-        .kpi-icon {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            font-size: 22px;
-            opacity: 0.5;
-        }
-
-        /* ── Charts Grid ── */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 16px;
-        }
-
-        .charts-grid-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-        }
-
-        .chart-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .chart-card h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .chart-card .chart-sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 16px;
-        }
-
-        .chart-wrap {
-            position: relative;
-            height: 220px;
-        }
-
-        .chart-wrap-sm {
-            position: relative;
-            height: 180px;
-        }
-
-        /* ── Provider Cards ── */
-        .provider-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .provider-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .provider-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .provider-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .provider-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .provider-status {
-            margin-left: auto;
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .status-ok {
-            background: rgba(63, 185, 80, 0.15);
-            color: var(--green);
-        }
-
-        .status-warn {
-            background: rgba(210, 153, 34, 0.15);
-            color: var(--yellow);
-        }
-
-        .status-err {
-            background: rgba(248, 81, 73, 0.15);
-            color: var(--red);
-        }
-
-        .status-nc {
-            background: rgba(139, 148, 158, 0.15);
-            color: var(--muted);
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
-        }
-
-        .stat-row:last-child {
-            border-bottom: none;
-        }
-
-        .stat-row .label {
-            color: var(--muted);
-        }
-
-        .stat-row .value {
-            font-weight: 600;
-        }
-
-        /* ── Alerts Panel ── */
-        .alerts-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .alert-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            border: 1px solid;
-        }
-
-        .alert-item.warn {
-            background: rgba(210, 153, 34, 0.08);
-            border-color: rgba(210, 153, 34, 0.3);
-        }
-
-        .alert-item.danger {
-            background: rgba(248, 81, 73, 0.08);
-            border-color: rgba(248, 81, 73, 0.3);
-        }
-
-        .alert-item.info {
-            background: rgba(88, 166, 255, 0.08);
-            border-color: rgba(88, 166, 255, 0.3);
-        }
-
-        .alert-icon {
-            font-size: 16px;
-            margin-top: 1px;
-        }
-
-        .alert-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .alert-desc {
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .no-alerts {
-            color: var(--muted);
-            font-size: 13px;
-            text-align: center;
-            padding: 20px;
-        }
-
-        /* ── Services Table ── */
-        .services-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .services-table th {
-            text-align: left;
-            padding: 8px 12px;
-            color: var(--muted);
-            font-weight: 500;
-            font-size: 11px;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .services-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .services-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .bar-bg {
-            background: var(--surface2);
-            border-radius: 4px;
+        ::-webkit-scrollbar {
+            width: 6px;
             height: 6px;
-            flex: 1;
         }
 
-        .bar-fill {
-            height: 6px;
-            border-radius: 4px;
+        ::-webkit-scrollbar-track {
+            background: #0B0E14;
         }
 
-        .bar-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        ::-webkit-scrollbar-thumb {
+            background: #272B36;
+            border-radius: 3px;
         }
 
-        /* ── Budget Gauge ── */
-        .gauge-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3F4451;
         }
 
-        .gauge-label {
-            font-size: 12px;
-            color: var(--muted);
+        .glass-panel {
+            background: rgba(21, 25, 33, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* ── Spinner ── */
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid var(--border);
-            border-top-color: var(--green);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* ── Section Header ── */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .section-header h2 {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .section-header span {
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 1100px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .charts-grid-3 {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .provider-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
-            .charts-grid-3 {
-                grid-template-columns: 1fr;
-            }
-
-            .provider-grid {
-                grid-template-columns: 1fr;
-            }
+        .text-gradient {
+            background: linear-gradient(to right, #ffffff, #8A8F98);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
 
-<body>
-    <div class="layout">
-
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-logo"><span>☁️</span> CloudSight</div>
-
-            <div class="nav-section">Overview</div>
-            <a class="nav-item active" href="dashboard.html">📊 Dashboard</a>
-            <a class="nav-item" href="#" id="nav-refresh">🔄 Force Refresh</a>
-
-            <div class="nav-section">Providers</div>
-            <a class="nav-item" href="#aws-section">🟠 AWS</a>
-            <a class="nav-item" href="#azure-section">🔵 Azure</a>
-            <a class="nav-item" href="#gcp-section">🔷 GCP</a>
-
-            <div class="nav-section">Alerts</div>
-            <a class="nav-item" href="#alerts-section">🔔 Alerts <span id="alert-badge"
-                    style="margin-left:auto;background:var(--red);color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;display:none;">0</span></a>
-
-            <div class="sidebar-bottom">
-                <a class="nav-item" href="options.html">⚙️ Settings</a>
-                <div class="nav-item" style="font-size:11px;color:var(--muted);">Last sync: <span
-                        id="sidebar-sync">–</span></div>
+<body
+    class="bg-background-dark text-slate-100 antialiased selection:bg-primary/30 selection:text-white h-screen flex overflow-hidden">
+    <aside class="flex w-64 flex-col border-r border-border-dark bg-[#0B0E14]/95 backdrop-blur-sm z-30">
+        <div class="flex h-16 items-center gap-3 px-5 border-b border-border-dark">
+            <div
+                class="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-primary to-indigo-600 shadow-glow">
+                <span class="material-symbols-outlined text-white text-[18px]">cloud</span>
             </div>
-        </aside>
+            <div class="flex flex-col">
+                <h1 class="text-sm font-semibold text-white tracking-wide">CloudSight</h1>
+                <span class="text-[10px] text-muted-text font-medium tracking-wide">ENTERPRISE</span>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto px-3 py-6 space-y-8">
+            <div class="space-y-1">
+                <p class="px-3 text-[11px] font-semibold text-muted-text/60 uppercase tracking-widest mb-2">Dashboard
+                </p>
+                <a id="nav-overview"
+                    class="flex items-center gap-3 px-3 py-2 rounded-md bg-white/5 text-white border border-white/5 transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined text-[18px] text-primary">dashboard</span>
+                    <span class="text-sm font-medium">Overview</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2 rounded-md text-muted-text hover:text-white hover:bg-white/5 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined text-[18px]">notifications</span>
+                    <span class="text-sm font-medium">Alerts</span>
+                    <span id="nav-alerts-indicator" style="display:none"
+                        class="ml-auto flex h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                </a>
+            </div>
+            <div class="space-y-1">
+                <p class="px-3 text-[11px] font-semibold text-muted-text/60 uppercase tracking-widest mb-2">Integration
+                    Status</p>
 
-        <!-- Main -->
-        <div class="main">
-            <div class="topbar">
-                <div class="topbar-title">Cloud Cost Dashboard</div>
-                <div class="topbar-right">
-                    <div class="badge" id="currency-badge">USD</div>
-                    <div class="badge" id="sync-badge">⏳ Loading…</div>
-                    <button class="btn-outline" id="open-options">⚙ Settings</button>
-                    <button class="btn" id="refresh-btn">↻ Refresh</button>
+                <div id="status-row-aws"
+                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md">
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg class="text-[#FF9900] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M17.4 12.6c-.4 0-.8.1-1.1.2-.3.2-.6.4-.8.7-.2.3-.4.6-.5 1-.1.4-.1.8-.1 1.2s0 .8.1 1.2c.1.4.3.7.5 1 .2.3.5.5.8.7.3.2.7.2 1.1.2.4 0 .8-.1 1.1-.2.3-.2.6-.4.8-.7.2-.3.4-.6.5-1 .1-.4.1-.8.1-1.2s0-.8-.1-1.2c-.1-.4-.3-.7-.5-1-.2-.3-.5-.5-.8-.7-.3-.2-.7-.3-1.1-.3zm-4.7 0c-.4 0-.8.1-1.1.2-.3.2-.6.4-.8.7-.2.3-.4.6-.5 1-.1.4-.1.8-.1 1.2s0 .8.1 1.2c.1.4.3.7.5 1 .2.3.5.5.8.7.3.2.7.2 1.1.2.4 0 .8-.1 1.1-.2.3-.2.6-.4.8-.7.2-.3.4-.6.5-1 .1-.4.1-.8.1-1.2s0-.8-.1-1.2c-.1-.4-.3-.7-.5-1-.2-.3-.5-.5-.8-.7-.3-.2-.7-.3-1.1-.3zm-9.5 0c-.4 0-.8.1-1.1.2-.3.2-.6.4-.8.7-.2.3-.4.6-.5 1-.1.4-.1.8-.1 1.2s0 .8.1 1.2c.1.4.3.7.5 1 .2.3.5.5.8.7.3.2.7.2 1.1.2.4 0 .8-.1 1.1-.2.3-.2.6-.4.8-.7.2-.3.4-.6.5-1 .1-.4.1-.8.1-1.2s0-.8-.1-1.2c-.1-.4-.3-.7-.5-1-.2-.3-.5-.5-.8-.7-.3-.2-.7-.3-1.1-.3zm15.1-4c-.7-.9-1.5-1.5-2.6-2s-2.3-.7-3.7-.7c-1.4 0-2.6.2-3.7.7-1.1.5-1.9 1.1-2.6 2l1.1 1.6c.5-.7 1.2-1.2 2-1.5 1-.4 2.1-.6 3.2-.6s2.3.2 3.2.6c.9.4 1.5.9 2 1.5l1.1-1.6z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-white">AWS</span>
+                    </div>
+                    <!-- Status Dot -->
+                    <div id="status-dot-aws" class="h-1.5 w-1.5 rounded-full bg-slate-600"></div>
+                </div>
+
+                <div id="status-row-azure"
+                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60">
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg class="text-[#0078D4] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M5.4 20l3.1-9.3 5.4 9.3H5.4zm-1.8-1l7.8-14h1.7l-4.2 14H3.6zm10.2 1l5.8-9.8h-4.6l-3.3 5.6 2.1 4.2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-sm font-medium text-muted-text group-hover:text-white transition-colors">Azure</span>
+                    </div>
+                    <div id="status-dot-azure" class="h-1.5 w-1.5 rounded-full bg-slate-600"></div>
+                </div>
+
+                <div id="status-row-gcp"
+                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60">
+                    <div class="flex items-center gap-3">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <svg class="text-[#DB4437] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 24c6.6 0 12-5.4 12-12S18.6 0 12 0 0 5.4 0 12s5.4 12 12 12z" fill="#fff"
+                                    fill-opacity="0.1"></path>
+                                <path
+                                    d="M12.3 10.3v3.4h4.8c-.2 1.2-1.4 3.5-4.8 3.5-2.9 0-5.3-2.4-5.3-5.3s2.4-5.3 5.3-5.3c1.3 0 2.5.5 3.4 1.3l2.7-2.7C16.8 3.7 14.7 2.7 12.3 2.7 7 2.7 2.7 7 2.7 12.3s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.8-.1-1.4-.2-2H12.3z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-sm font-medium text-muted-text group-hover:text-white transition-colors">GCP</span>
+                    </div>
+                    <div id="status-dot-gcp" class="h-1.5 w-1.5 rounded-full bg-slate-600"></div>
                 </div>
             </div>
-
-            <div class="content">
-
-                <!-- KPI Row -->
-                <div>
-                    <div class="section-header">
-                        <h2>Key Metrics</h2>
-                        <span id="kpi-updated">–</span>
+            <div class="space-y-1 pt-4 border-t border-border-dark">
+                <a id="nav-settings"
+                    class="flex items-center gap-3 px-3 py-2 rounded-md text-muted-text hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">settings</span>
+                    <span class="text-sm font-medium">Settings</span>
+                </a>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-border-dark bg-[#0e121a]">
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-purple-400 p-[1px]">
+                    <img alt="User" class="rounded-full bg-black h-full w-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqS2PCfqFOZYGCQkQiddhdV2mnZCx-eHGXIL46mPkbDhHxUPcCPzJTy9fAvd6e2YCcCIw17_rs-sKKgeGxtIejVwXuNiNwNHQ3Z3Olw2XOZFSjOrQN6yfVOckpYxmJ-LOrx8EIgFe4dgl0gRUU-8zGHpPbJ1_PsRxwOl5IGo_QuiwOAj-CU36Mo04VzmtYyOh3Z2PBCuvnuJjhzzbfncklGvh_8LU9QhN3BrEq3FcUTJeSBnALLa5G4Qo6Zpju57nTJt6Pg15swSYn" />
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-semibold text-white">Admin User</span>
+                    <span class="text-[10px] text-muted-text">Cloud Admin</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto relative bg-background-dark/50">
+        <div class="absolute inset-0 z-[-1] bg-subtle-grid pointer-events-none"></div>
+        <header
+            class="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-border-dark bg-[#0B0E14]/80 px-8 backdrop-blur-xl">
+            <div class="flex items-baseline gap-4">
+                <h2 class="text-2xl font-bold text-gradient tracking-tight">Cloud Command Center</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <!-- Anomaly Alert (Hidden by default) -->
+                <div id="header-anomaly" style="display:none"
+                    class="items-center gap-3 rounded-full border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+                    <span class="material-symbols-outlined text-amber-500 text-[18px] animate-pulse">warning</span>
+                    <div class="flex flex-col">
+                        <span
+                            class="text-[11px] font-bold text-amber-500 uppercase tracking-widest leading-none">Anomaly
+                            Detected</span>
+                        <span id="header-anomaly-text" class="text-[10px] text-amber-400/80 leading-none mt-0.5">Spike
+                            detected</span>
                     </div>
-                    <div class="kpi-grid">
-                        <div class="kpi-card blue">
-                            <div class="kpi-icon">💰</div>
-                            <div class="kpi-label">Total Spend (MTD)</div>
-                            <div class="kpi-value" id="kpi-total">–</div>
-                            <div class="kpi-sub">Month-to-date across all clouds</div>
+                </div>
+                <div id="time-filters"
+                    class="hidden sm:flex items-center gap-px rounded-lg border border-border-dark bg-card-dark p-1 shadow-sm">
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium text-muted-text hover:text-white transition-colors">1D</button>
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium text-muted-text hover:text-white transition-colors">7D</button>
+                    <button
+                        class="bg-white/10 rounded-md px-3 py-1.5 text-xs font-medium text-white shadow-sm ring-1 ring-white/10">30D</button>
+                </div>
+            </div>
+        </header>
+        <div class="p-8 max-w-[1600px] mx-auto space-y-8">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Total Spend -->
+                <div
+                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-6xl text-primary">payments</span>
+                    </div>
+                    <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Total Spend (MTD)</p>
+                    <div class="mt-4 flex items-baseline gap-2">
+                        <h3 id="kpi-total" class="text-3xl font-bold text-white tracking-tight">--</h3>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <span
+                            class="flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
+                            <span class="material-symbols-outlined text-[12px]">calendar_today</span> Current Mo
+                        </span>
+                    </div>
+                </div>
+                <!-- Forecast -->
+                <div
+                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-6xl text-indigo-500">query_stats</span>
+                    </div>
+                    <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Forecasted Spend</p>
+                    <div class="mt-4 flex items-baseline gap-2">
+                        <h3 id="kpi-forecast" class="text-3xl font-bold text-white tracking-tight">--</h3>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <span
+                            class="flex items-center gap-1 rounded bg-indigo-500/10 px-1.5 py-0.5 text-[11px] font-medium text-indigo-400 border border-indigo-500/20">
+                            End of Month
+                        </span>
+                    </div>
+                </div>
+                <!-- Budget -->
+                <div
+                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Budget Used</p>
+                        <div class="mt-4 flex items-baseline gap-2">
+                            <h3 id="kpi-budget-pct" class="text-3xl font-bold text-white tracking-tight">--%</h3>
                         </div>
-                        <div class="kpi-card purple">
-                            <div class="kpi-icon">📈</div>
-                            <div class="kpi-label">Predicted EOM Bill</div>
-                            <div class="kpi-value" id="kpi-forecast">–</div>
-                            <div class="kpi-sub">End-of-month estimate</div>
-                        </div>
-                        <div class="kpi-card" id="kpi-budget-card">
-                            <div class="kpi-icon">🎯</div>
-                            <div class="kpi-label">Budget Used</div>
-                            <div class="kpi-value" id="kpi-budget-pct">–</div>
-                            <div class="kpi-sub" id="kpi-budget-sub">of $1,000 limit</div>
-                        </div>
-                        <div class="kpi-card yellow">
-                            <div class="kpi-icon">🔔</div>
-                            <div class="kpi-label">Active Alerts</div>
-                            <div class="kpi-value" id="kpi-alerts">0</div>
-                            <div class="kpi-sub" id="kpi-alert-sub">No issues detected</div>
-                        </div>
-                        <div class="kpi-card aws-card">
-                            <div class="kpi-icon">🟠</div>
-                            <div class="kpi-label">AWS Spend</div>
-                            <div class="kpi-value" id="kpi-aws">–</div>
-                            <div class="kpi-sub" id="kpi-aws-sub">–</div>
-                        </div>
-                        <div class="kpi-card azure-card">
-                            <div class="kpi-icon">🔵</div>
-                            <div class="kpi-label">Azure Spend</div>
-                            <div class="kpi-value" id="kpi-azure">–</div>
-                            <div class="kpi-sub" id="kpi-azure-sub">–</div>
-                        </div>
-                        <div class="kpi-card gcp-card">
-                            <div class="kpi-icon">🔷</div>
-                            <div class="kpi-label">GCP Spend</div>
-                            <div class="kpi-value" id="kpi-gcp">–</div>
-                            <div class="kpi-sub" id="kpi-gcp-sub">–</div>
+                        <p id="kpi-budget-rem" class="mt-4 text-[11px] text-muted-text">-- remaining</p>
+                    </div>
+                    <div class="relative h-16 w-16">
+                        <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-slate-800"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none" stroke="currentColor" stroke-width="3"></path>
+                            <!-- Dynamic Dash Array controlled by JS. Circumference ~100 -->
+                            <path id="gauge-path-fill"
+                                class="text-primary drop-shadow-[0_0_8px_rgba(94,106,210,0.5)] transition-all duration-1000"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none" stroke="currentColor" stroke-dasharray="0, 100" stroke-linecap="round"
+                                stroke-width="3"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-muted-text text-[18px]">pie_chart</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- Charts Row 1: Trend + Donut -->
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <h3>14-Day Cost Trend</h3>
-                        <div class="chart-sub">Daily spend across all providers (USD base)</div>
-                        <div class="chart-wrap">
-                            <canvas id="trendChart"></canvas>
+                <!-- System Status -->
+                <div
+                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-6xl text-amber-500">health_and_safety</span>
+                    </div>
+                    <p class="text-xs font-medium text-muted-text uppercase tracking-wider">System Status</p>
+                    <div class="mt-4 flex items-center gap-2">
+                        <h3 id="kpi-status-main" class="text-3xl font-bold text-white tracking-tight">--</h3>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <span
+                            class="flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-500 border border-amber-500/20">
+                            <span id="kpi-status-sub" class="text-[10px]">-- Alert</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row -->
+            <div class="grid grid-cols-12 gap-6">
+                <div
+                    class="col-span-12 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">Cost Trend Analysis</h3>
+                            <p class="text-sm text-muted-text mt-1">Multi-cloud expenditure forecast vs actual usage</p>
                         </div>
                     </div>
-                    <div class="chart-card">
-                        <h3>Spend by Provider</h3>
-                        <div class="chart-sub">Current month distribution</div>
-                        <div class="chart-wrap">
-                            <canvas id="donutChart"></canvas>
-                        </div>
+                    <div class="relative h-80 w-full" id="chart-container">
+                        <canvas id="trendChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Charts Row 2: Bar + Gauge + Forecast -->
-                <div class="charts-grid-3">
-                    <div class="chart-card">
-                        <h3>Top Services (AWS)</h3>
-                        <div class="chart-sub">Highest cost services this month</div>
-                        <div class="chart-wrap-sm">
-                            <canvas id="servicesChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3>Budget Gauge</h3>
-                        <div class="chart-sub">Global spend vs $1,000 limit</div>
-                        <div class="chart-wrap-sm">
-                            <canvas id="gaugeChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3>Forecast vs Actual</h3>
-                        <div class="chart-sub">Projected end-of-month vs current</div>
-                        <div class="chart-wrap-sm">
-                            <canvas id="forecastChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alerts Section -->
-                <div id="alerts-section">
-                    <div class="section-header">
-                        <h2>🔔 Alerts & Anomalies</h2>
-                        <span id="alerts-count-label">–</span>
-                    </div>
-                    <div class="alerts-list" id="alerts-list">
-                        <div class="no-alerts">Loading alerts…</div>
-                    </div>
-                </div>
-
-                <!-- Provider Detail Cards -->
-                <div id="aws-section">
-                    <div class="section-header">
-                        <h2>Provider Details</h2>
-                    </div>
-                    <div class="provider-grid">
-                        <!-- AWS -->
-                        <div class="provider-card">
-                            <div class="provider-header">
-                                <div class="provider-dot" style="background:var(--aws)"></div>
-                                <div class="provider-name">Amazon Web Services</div>
-                                <div class="provider-status" id="aws-status">–</div>
+                <div
+                    class="col-span-12 lg:col-span-4 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm flex flex-col justify-between">
+                    <h3 class="text-lg font-semibold text-white mb-2">Provider Distribution</h3>
+                    <div class="flex flex-col items-center justify-center relative py-6">
+                        <div class="relative h-48 w-48">
+                            <svg class="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" fill="none" r="15.915" stroke="#1F2430" stroke-width="3">
+                                </circle>
+                                <!-- AWS -->
+                                <circle id="donut-path-aws" class="transition-all duration-1000" cx="18" cy="18"
+                                    fill="none" r="15.915" stroke="#FF9900" stroke-dasharray="0 100" stroke-width="3">
+                                </circle>
+                                <!-- Azure -->
+                                <circle id="donut-path-azure" class="transition-all duration-1000" cx="18" cy="18"
+                                    fill="none" r="15.915" stroke="#0078D4" stroke-dasharray="0 100"
+                                    stroke-dashoffset="0" stroke-width="3"></circle>
+                                <!-- GCP -->
+                                <circle id="donut-path-gcp" class="transition-all duration-1000" cx="18" cy="18"
+                                    fill="none" r="15.915" stroke="#DB4437" stroke-dasharray="0 100"
+                                    stroke-dashoffset="0" stroke-width="3"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-xs text-muted-text uppercase tracking-wider font-medium">Total
+                                    Spend</span>
+                                <span id="donut-total"
+                                    class="text-2xl font-bold text-white tracking-tight mt-1">--</span>
                             </div>
-                            <div class="stat-row"><span class="label">MTD Spend</span><span class="value"
-                                    id="aws-mtd">–</span></div>
-                            <div class="stat-row"><span class="label">Forecast (EOM)</span><span class="value"
-                                    id="aws-forecast">–</span></div>
-                            <div class="stat-row"><span class="label">Top Service</span><span class="value"
-                                    id="aws-top">–</span></div>
-                            <div class="stat-row"><span class="label">Anomaly</span><span class="value"
-                                    id="aws-anomaly">–</span></div>
                         </div>
-                        <!-- Azure -->
-                        <div class="provider-card" id="azure-section">
-                            <div class="provider-header">
-                                <div class="provider-dot" style="background:var(--azure)"></div>
-                                <div class="provider-name">Microsoft Azure</div>
-                                <div class="provider-status" id="azure-status">–</div>
-                            </div>
-                            <div class="stat-row"><span class="label">MTD Spend</span><span class="value"
-                                    id="azure-mtd">–</span></div>
-                            <div class="stat-row"><span class="label">Forecast (EOM)</span><span class="value"
-                                    id="azure-forecast">–</span></div>
-                            <div class="stat-row"><span class="label">Top Service</span><span class="value"
-                                    id="azure-top">–</span></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-border-dark">
+                        <div class="text-center">
+                            <span class="block text-[10px] text-muted-text mb-1">AWS</span>
+                            <span id="donut-pct-aws" class="block text-sm font-bold text-white">--%</span>
                         </div>
-                        <!-- GCP -->
-                        <div class="provider-card" id="gcp-section">
-                            <div class="provider-header">
-                                <div class="provider-dot" style="background:var(--gcp)"></div>
-                                <div class="provider-name">Google Cloud Platform</div>
-                                <div class="provider-status" id="gcp-status">–</div>
-                            </div>
-                            <div class="stat-row"><span class="label">MTD Spend</span><span class="value"
-                                    id="gcp-mtd">–</span></div>
-                            <div class="stat-row"><span class="label">Forecast (EOM)</span><span class="value"
-                                    id="gcp-forecast">–</span></div>
-                            <div class="stat-row"><span class="label">Note</span><span class="value"
-                                    style="color:var(--muted);font-size:11px;">BigQuery for full data</span></div>
+                        <div class="text-center border-l border-border-dark">
+                            <span class="block text-[10px] text-muted-text mb-1">Azure</span>
+                            <span id="donut-pct-azure" class="block text-sm font-bold text-white">--%</span>
+                        </div>
+                        <div class="text-center border-l border-border-dark">
+                            <span class="block text-[10px] text-muted-text mb-1">GCP</span>
+                            <span id="donut-pct-gcp" class="block text-sm font-bold text-white">--%</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Services Breakdown Table -->
-                <div class="chart-card">
-                    <div class="section-header">
-                        <h2>AWS Service Breakdown</h2>
-                        <span>Top 5 by cost</span>
+                <!-- Top Services List -->
+                <div class="col-span-12 lg:col-span-8 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-white">Top Services Breakdown</h3>
+                        <button class="text-xs text-primary hover:text-white font-medium transition-colors">View
+                            Report</button>
                     </div>
-                    <table class="services-table">
-                        <thead>
-                            <tr>
-                                <th>Service</th>
-                                <th>Cost</th>
-                                <th style="width:40%">Share</th>
-                            </tr>
-                        </thead>
-                        <tbody id="services-tbody">
-                            <tr>
-                                <td colspan="3" style="color:var(--muted);text-align:center;padding:20px;">Loading…</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="space-y-6" id="services-list">
+                        <!-- Dynamic Content -->
+                        <div class="text-center text-muted-text text-sm py-4">Loading services...</div>
+                    </div>
                 </div>
-
-            </div><!-- /content -->
-        </div><!-- /main -->
-    </div><!-- /layout -->
-
+            </div>
+        </div>
+    </main>
     <script src="dashboard.js"></script>
 </body>
 

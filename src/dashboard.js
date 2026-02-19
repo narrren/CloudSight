@@ -1,426 +1,260 @@
 import Chart from 'chart.js/auto';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const BUDGET_LIMIT_USD = 1000;
-
+// Helper: Format Currency
 const CURRENCY_SYMBOLS = {
-    USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥'
+    USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥', CAD: 'C$', AUD: 'A$'
 };
-
-function fmt(val, currency, rate = 1) {
-    const sym = CURRENCY_SYMBOLS[currency] || currency + ' ';
-    return `${sym}${(val * rate).toFixed(2)}`;
+function f(val, currency = 'USD') {
+    const sym = CURRENCY_SYMBOLS[currency] || '$';
+    return `${sym}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function setEl(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.innerText = val;
-}
-
-function providerStatus(providerData) {
-    if (!providerData || providerData.error) return ['Not Connected', 'status-nc'];
-    if (providerData.anomaly?.isAnomaly) return ['⚠ Spike', 'status-warn'];
-    return ['✓ OK', 'status-ok'];
-}
-
-// ── Main ─────────────────────────────────────────────────────────────────────
+// 1. Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    // Buttons
-    document.getElementById('refresh-btn').addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: 'FORCE_REFRESH' });
-        setEl('sync-badge', '⏳ Refreshing…');
-        setTimeout(() => location.reload(), 8000);
-    });
-    document.getElementById('nav-refresh')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        chrome.runtime.sendMessage({ action: 'FORCE_REFRESH' });
-        setEl('sync-badge', '⏳ Refreshing…');
-        setTimeout(() => location.reload(), 8000);
-    });
-    document.getElementById('open-options')?.addEventListener('click', () => {
-        chrome.runtime.openOptionsPage();
-    });
-
-    // Load Data
-    const result = await chrome.storage.local.get(['dashboardData']);
-    const data = result.dashboardData;
-
-    if (!data) {
-        setEl('sync-badge', '⚠ No Data – Configure Settings');
-        document.getElementById('kpi-total').innerText = 'Setup Required';
-        document.getElementById('kpi-total').style.cursor = 'pointer';
-        document.getElementById('kpi-total').onclick = () => chrome.runtime.openOptionsPage();
-        document.getElementById('alerts-list').innerHTML = `
-      <div class="alert-item info">
-        <div class="alert-icon">ℹ️</div>
-        <div>
-          <div class="alert-title">No cloud credentials configured</div>
-          <div class="alert-desc">Click Settings to add your AWS, Azure, or GCP credentials.</div>
-        </div>
-      </div>`;
-        return;
+    const data = await chrome.storage.local.get(['dashboardData']);
+    if (data && data.dashboardData) {
+        renderDashboard(data.dashboardData);
+    } else {
+        // Handle empty state
+        document.getElementById('kpi-total').innerText = '$0.00';
     }
+});
 
-    // ── Decryption Error State ───────────────────────────────────────────────────
-    if (data.decryptionError) {
-        setEl('sync-badge', '⚠ Decryption Error');
-        document.getElementById('kpi-total').innerText = 'Error';
-        document.getElementById('alerts-list').innerHTML = `
-      <div class="alert-item danger">
-        <div class="alert-icon">🔐</div>
-        <div>
-          <div class="alert-title">Credential Decryption Failed</div>
-          <div class="alert-desc">${data.errorMessage || 'Please re-open Settings and re-save your credentials.'}</div>
-        </div>
-      </div>`;
-        setEl('kpi-alerts', '1');
-        setEl('kpi-alert-sub', 'Decryption error');
-        return;
-    }
-
-    // ── Not Configured State ─────────────────────────────────────────────────────
-    if (data.notConfigured) {
-        setEl('sync-badge', '⚠ Not Configured');
-        document.getElementById('kpi-total').innerText = 'Setup Required';
-        document.getElementById('kpi-total').style.cursor = 'pointer';
-        document.getElementById('kpi-total').onclick = () => chrome.runtime.openOptionsPage();
-        document.getElementById('alerts-list').innerHTML = `
-      <div class="alert-item info">
-        <div class="alert-icon">ℹ️</div>
-        <div>
-          <div class="alert-title">No cloud credentials configured</div>
-          <div class="alert-desc">Click Settings to add your AWS, Azure, or GCP credentials.</div>
-        </div>
-      </div>`;
-        return;
-    }
-
+function renderDashboard(data) {
     const currency = data.currency || 'USD';
-    const rate = data.rate || 1.0;
-    const budgetLimit = BUDGET_LIMIT_USD * rate;
-    const sym = CURRENCY_SYMBOLS[currency] || currency + ' ';
-    const f = (val) => fmt(val, currency);  // already-converted values
-    const fRaw = (val) => fmt(val, currency, rate); // raw USD values
 
-    // ── Sync Badge ──────────────────────────────────────────────────────────────
-    const syncTime = data.lastUpdated ? new Date(data.lastUpdated).toLocaleTimeString() : 'Never';
-    setEl('sync-badge', `✓ Synced ${syncTime}`);
-    setEl('sidebar-sync', syncTime);
-    setEl('kpi-updated', `Updated ${syncTime}`);
-    setEl('currency-badge', currency);
+    // ── 1. Update KPIs ────────────────────────────────────────────────────────
 
-    // ── KPI Cards ───────────────────────────────────────────────────────────────
-    setEl('kpi-total', f(data.totalGlobal));
+    // Total Spend
+    document.getElementById('kpi-total').innerText = f(data.totalGlobal, currency);
 
-    const awsCost = (data.aws?.totalCost || 0);
-    const azureCost = (data.azure?.totalCost || 0);
-    const gcpCost = (data.gcp?.totalCost || 0);
-
-    const awsForecast = parseFloat(data.aws?.forecast || 0);
-    const azureForecast = parseFloat(data.azure?.forecast || 0);
-    const gcpForecast = parseFloat(data.gcp?.forecast || 0);
-    const totalForecast = (awsForecast + azureForecast + gcpForecast) * rate;
-
-    setEl('kpi-forecast', f(totalForecast));
+    // Forecast
+    let totalForecast = 0;
+    ['aws', 'azure', 'gcp'].forEach(p => {
+        if (data[p]?.forecast) totalForecast += parseFloat(data[p].forecast);
+    });
+    document.getElementById('kpi-forecast').innerText = f(totalForecast, currency);
 
     // Budget
-    const budgetPct = (data.totalGlobal / budgetLimit) * 100;
-    setEl('kpi-budget-pct', `${budgetPct.toFixed(1)}%`);
-    setEl('kpi-budget-sub', `of ${sym}${budgetLimit.toFixed(0)} limit`);
-    const budgetCard = document.getElementById('kpi-budget-card');
-    if (budgetPct >= 100) {
-        budgetCard.classList.add('red');
-    } else if (budgetPct >= 80) {
-        budgetCard.classList.add('yellow');
-    } else {
-        budgetCard.classList.add('green');
+    // Default budget $1000 if not set? Or use existing logic?
+    const budgetLimit = 1000; // Hardcoded for demo, or fetch from settings if implemented
+    const budgetPct = Math.min(100, (data.totalGlobal / budgetLimit) * 100).toFixed(0);
+    const budgetRem = Math.max(0, budgetLimit - data.totalGlobal);
+
+    document.getElementById('kpi-budget-pct').innerText = `${budgetPct}%`;
+    document.getElementById('kpi-budget-rem').innerText = `${f(budgetRem, currency)} remaining`;
+
+    // Update Budget Gauge SVG (Dasharray: value, 100)
+    // The path id is 'gauge-path-fill'
+    const gaugePath = document.getElementById('gauge-path-fill');
+    if (gaugePath) {
+        // Circumference is ~100. So we set first value to percentage.
+        // Stroke-dasharray="pct, 100"
+        gaugePath.setAttribute('stroke-dasharray', `${budgetPct}, 100`);
+        // Color based on percentage
+        if (budgetPct > 90) gaugePath.classList.remove('text-primary'); gaugePath.classList.add('text-rose-500');
     }
 
-    // Provider KPIs
-    setEl('kpi-aws', fRaw(awsCost));
-    setEl('kpi-azure', fRaw(azureCost));
-    setEl('kpi-gcp', fRaw(gcpCost));
-    setEl('kpi-aws-sub', data.aws?.error ? 'Not connected' : `Forecast: ${fRaw(awsForecast)}`);
-    setEl('kpi-azure-sub', data.azure?.error ? 'Not connected' : `Forecast: ${fRaw(azureForecast)}`);
-    setEl('kpi-gcp-sub', data.gcp?.error ? 'Not connected' : `Forecast: ${fRaw(gcpForecast)}`);
+    // System Status
+    // Logic: check errors
+    const errors = [];
+    if (data.aws?.error) errors.push('AWS');
+    if (data.azure?.error) errors.push('Azure');
+    if (data.gcp?.error) errors.push('GCP');
 
-    // ── Alerts ──────────────────────────────────────────────────────────────────
-    const alerts = [];
-    if (budgetPct >= 100) alerts.push({ type: 'danger', icon: '🚨', title: 'Budget Exceeded!', desc: `You have used ${budgetPct.toFixed(1)}% of your ${sym}${budgetLimit.toFixed(0)} limit.` });
-    else if (budgetPct >= 80) alerts.push({ type: 'warn', icon: '⚠️', title: 'Budget Warning', desc: `${budgetPct.toFixed(1)}% of budget used. Approaching limit.` });
-    if (data.aws?.anomaly?.isAnomaly) alerts.push({ type: 'danger', icon: '📈', title: 'AWS Cost Spike', desc: `Yesterday's spend (${fRaw(data.aws.anomaly.today)}) was >3× the 14-day average (${fRaw(data.aws.anomaly.average)}).` });
-    if (totalForecast > budgetLimit * 1.1) alerts.push({ type: 'warn', icon: '🔮', title: 'Forecast Exceeds Budget', desc: `Predicted EOM bill of ${f(totalForecast)} exceeds your limit.` });
-    // Only show fetch-failed alert when ALL providers errored AND total is 0
-    if (data.aws?.error && data.azure?.error && data.gcp?.error && data.totalGlobal === 0) {
-        const awsErr = data.aws?.errorMsg || '';
-        const isNotConfigured = awsErr === 'AWS Not Configured';
-        if (!isNotConfigured) {
-            alerts.push({
-                type: 'danger',
-                icon: '🔴',
-                title: 'AWS Fetch Failed',
-                desc: awsErr
-                    ? `Error: ${awsErr}. Check your IAM key permissions or that Cost Explorer is enabled.`
-                    : 'AWS API call failed. Check your credentials in Settings.'
+    const statusMain = document.getElementById('kpi-status-main');
+    const statusSub = document.getElementById('kpi-status-sub');
+
+    if (errors.length > 0) {
+        statusMain.innerText = 'Attention';
+        statusSub.innerText = `${errors.length} Alerts`;
+        statusMain.classList.add('text-amber-500');
+    } else {
+        statusMain.innerText = 'Active';
+        statusSub.innerText = 'Normal';
+        statusMain.classList.remove('text-amber-500');
+    }
+
+    // Alerts Dot in Nav
+    const navDot = document.getElementById('nav-alerts-indicator');
+    if (errors.length > 0 && navDot) navDot.style.display = 'block';
+
+    // Anomaly Header
+    // Check data.anomaly or data.aws.anomaly
+    const anomaly = data.aws?.anomaly; // Background script logic puts it here
+    if (anomaly && anomaly.isAnomaly) {
+        const headerAlert = document.getElementById('header-anomaly');
+        const headerText = document.getElementById('header-anomaly-text');
+        if (headerAlert) headerAlert.style.display = 'flex';
+        if (headerText) headerText.innerText = `Spike detected: ${f(anomaly.today, currency)}`;
+    }
+
+    // ── 2. Provider Distribution (Donut SVG) ──────────────────────────────────
+    // We need to calculate percentages for AWS, Azure, GCP
+    const awsCost = data.aws?.totalCost || 0;
+    const azureCost = data.azure?.totalCost || 0;
+    const gcpCost = data.gcp?.totalCost || 0;
+    const total = data.totalGlobal || 1; // avoid divide by zero
+
+    const awsPct = (awsCost / total) * 100;
+    const azurePct = (azureCost / total) * 100;
+    const gcpPct = (gcpCost / total) * 100;
+
+    // Update Text Legend
+    document.getElementById('donut-pct-aws').innerText = `${awsPct.toFixed(0)}%`;
+    document.getElementById('donut-pct-azure').innerText = `${azurePct.toFixed(0)}%`;
+    document.getElementById('donut-pct-gcp').innerText = `${gcpPct.toFixed(0)}%`;
+    document.getElementById('donut-total').innerText = f(total, currency); // Short format if needed
+
+    // Update SVG Circles
+    // Circle circumference ~100 (r=15.915)
+    // AWS (Base): start 0
+    document.getElementById('donut-path-aws')?.setAttribute('stroke-dasharray', `${awsPct}, 100`);
+
+    // Azure (Next): start after AWS
+    document.getElementById('donut-path-azure')?.setAttribute('stroke-dasharray', `${azurePct}, 100`);
+    document.getElementById('donut-path-azure')?.setAttribute('stroke-dashoffset', `-${awsPct}`);
+
+    // GCP (Next): start after AWS+Azure
+    document.getElementById('donut-path-gcp')?.setAttribute('stroke-dasharray', `${gcpPct}, 100`);
+    document.getElementById('donut-path-gcp')?.setAttribute('stroke-dashoffset', `-${awsPct + azurePct}`);
+
+
+    // ── 3. Top Services List ──────────────────────────────────────────────────
+    const servicesList = document.getElementById('services-list');
+    if (servicesList) {
+        servicesList.innerHTML = '';
+
+        // Aggregate services from all providers
+        let allServices = [];
+        if (data.aws?.services) allServices.push(...data.aws.services.map(s => ({ ...s, provider: 'AWS', color: '#FF9900' })));
+        if (data.azure?.services) allServices.push(...data.azure.services.map(s => ({ ...s, provider: 'Azure', color: '#0078D4' })));
+        if (data.gcp?.services) allServices.push(...data.gcp.services.map(s => ({ ...s, provider: 'GCP', color: '#DB4437' })));
+
+        // Sort by amount desc
+        allServices.sort((a, b) => b.amount - a.amount);
+
+        // Take top 5
+        const top5 = allServices.slice(0, 5);
+
+        top5.forEach(s => {
+            const widthPct = (s.amount / allServices[0].amount) * 100; // Relative to max
+            const html = `
+            <div class="group">
+                <div class="flex justify-between items-center text-sm mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="p-1.5 rounded bg-slate-800 text-[10px] font-bold" style="color: ${s.color}; border: 1px solid ${s.color}33">
+                            ${s.provider}
+                        </div>
+                        <span class="font-medium text-slate-200">${s.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-white">${f(s.amount, currency)}</span>
+                    </div>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500" style="width: ${widthPct}%; background-color: ${s.color}"></div>
+                </div>
+            </div>`;
+            servicesList.insertAdjacentHTML('beforeend', html);
+        });
+
+        if (top5.length === 0) {
+            servicesList.innerHTML = '<div class="text-center text-muted-text py-4">No services data available</div>';
+        }
+    }
+
+
+    // ── 4. Charts (Trend) ─────────────────────────────────────────────────────
+    const ctx = document.getElementById('trendChart');
+    if (ctx) {
+        // Aggregate history
+        const historyMap = {};
+
+        // Helper to add
+        const addHist = (histArray) => {
+            if (!histArray) return;
+            histArray.forEach(day => {
+                if (!historyMap[day.date]) historyMap[day.date] = 0;
+                historyMap[day.date] += day.cost;
             });
-        }
-    }
+        };
 
-    setEl('kpi-alerts', alerts.length);
-    setEl('kpi-alert-sub', alerts.length === 0 ? 'All systems normal' : `${alerts.length} issue${alerts.length > 1 ? 's' : ''} detected`);
-    setEl('alerts-count-label', `${alerts.length} alert${alerts.length !== 1 ? 's' : ''}`);
+        if (data.aws?.history) addHist(data.aws.history);
+        // Add others once implemented
 
-    const alertBadge = document.getElementById('alert-badge');
-    if (alerts.length > 0) {
-        alertBadge.style.display = 'inline';
-        alertBadge.innerText = alerts.length;
-    }
+        const labels = Object.keys(historyMap).sort();
+        const values = labels.map(d => historyMap[d]);
 
-    const alertsList = document.getElementById('alerts-list');
-    if (alerts.length === 0) {
-        alertsList.innerHTML = `<div class="no-alerts">✅ No alerts. Everything looks healthy!</div>`;
-    } else {
-        alertsList.innerHTML = alerts.map(a => `
-      <div class="alert-item ${a.type}">
-        <div class="alert-icon">${a.icon}</div>
-        <div>
-          <div class="alert-title">${a.title}</div>
-          <div class="alert-desc">${a.desc}</div>
-        </div>
-      </div>`).join('');
-    }
-
-    // ── Provider Status Cards ────────────────────────────────────────────────────
-    ['aws', 'azure', 'gcp'].forEach(p => {
-        const [label, cls] = providerStatus(data[p]);
-        const el = document.getElementById(`${p}-status`);
-        if (el) { el.innerText = label; el.className = `provider-status ${cls}`; }
-    });
-
-    setEl('aws-mtd', fRaw(awsCost));
-    setEl('aws-forecast', fRaw(awsForecast));
-    setEl('aws-top', data.aws?.services?.[0]?.name || '–');
-    setEl('aws-anomaly', data.aws?.anomaly?.isAnomaly ? `⚠ Spike: ${fRaw(data.aws.anomaly.today)}` : '✓ Normal');
-    // Show error detail in provider card if fetch failed
-    if (data.aws?.error && data.aws?.errorMsg && data.aws.errorMsg !== 'AWS Not Configured') {
-        const errEl = document.getElementById('aws-mtd');
-        if (errEl) {
-            errEl.style.color = 'var(--red)';
-            errEl.style.fontSize = '11px';
-            errEl.innerText = data.aws.errorMsg.length > 55
-                ? data.aws.errorMsg.slice(0, 55) + '…'
-                : data.aws.errorMsg;
-        }
-    }
-
-    setEl('azure-mtd', fRaw(azureCost));
-    setEl('azure-forecast', fRaw(azureForecast));
-    setEl('azure-top', data.azure?.services?.[0]?.name || '–');
-
-    setEl('gcp-mtd', fRaw(gcpCost));
-    setEl('gcp-forecast', fRaw(gcpForecast));
-
-    // ── Services Table ───────────────────────────────────────────────────────────
-    const services = data.aws?.services || [];
-    const maxCost = services[0]?.amount || 1;
-    const tbody = document.getElementById('services-tbody');
-    if (services.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px;">No AWS service data available</td></tr>`;
-    } else {
-        tbody.innerHTML = services.map(s => {
-            const pct = (s.amount / maxCost) * 100;
-            return `
-        <tr>
-          <td>${s.name}</td>
-          <td style="font-weight:600;">${fRaw(s.amount)}</td>
-          <td>
-            <div class="bar-row">
-              <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:var(--aws);"></div></div>
-              <span style="font-size:11px;color:var(--muted);min-width:35px;">${pct.toFixed(0)}%</span>
-            </div>
-          </td>
-        </tr>`;
-        }).join('');
-    }
-
-    // ── Chart 1: 14-Day Trend Line ───────────────────────────────────────────────
-    const history = data.aws?.history || [];
-    const trendLabels = history.length
-        ? history.map(h => h.date.slice(5))   // MM-DD
-        : Array.from({ length: 14 }, (_, i) => `Day ${i + 1}`);
-    const trendValues = history.length
-        ? history.map(h => h.cost * rate)
-        : Array(14).fill(0);
-
-    new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: {
-            labels: trendLabels,
-            datasets: [
-                {
-                    label: 'AWS Daily',
-                    data: trendValues,
-                    borderColor: '#FF9900',
-                    backgroundColor: 'rgba(255,153,0,0.08)',
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.map(d => d.slice(5)), // MM-DD
+                datasets: [{
+                    label: 'Total Daily Spend',
+                    data: values,
+                    borderColor: '#6366F1', // Primary Indigo
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+                        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+                        return gradient;
+                    },
+                    borderWidth: 2,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 3,
-                    pointHoverRadius: 6,
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#8b949e', font: { size: 11 } } },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${sym}${ctx.parsed.y.toFixed(2)}`
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#151921',
+                        titleColor: '#fff',
+                        bodyColor: '#cbd5e1',
+                        borderColor: '#272B36',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: '#272B36', drawBorder: false },
+                        ticks: { color: '#8A8F98', callback: (val) => '$' + val }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#8A8F98' }
                     }
                 }
-            },
-            scales: {
-                x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } },
-                y: {
-                    ticks: { color: '#8b949e', font: { size: 10 }, callback: v => `${sym}${v}` },
-                    grid: { color: '#21262d' }
-                }
             }
-        }
-    });
+        });
+    }
 
-    // ── Chart 2: Provider Donut ──────────────────────────────────────────────────
-    const donutLabels = [];
-    const donutValues = [];
-    const donutColors = [];
-    if (awsCost > 0) { donutLabels.push('AWS'); donutValues.push(awsCost * rate); donutColors.push('#FF9900'); }
-    if (azureCost > 0) { donutLabels.push('Azure'); donutValues.push(azureCost * rate); donutColors.push('#0078D4'); }
-    if (gcpCost > 0) { donutLabels.push('GCP'); donutValues.push(gcpCost * rate); donutColors.push('#4285F4'); }
-    if (donutValues.length === 0) { donutLabels.push('No Data'); donutValues.push(1); donutColors.push('#30363d'); }
+    // ── 5. Sidebar Status Dots ───────────────────────────────────────────────
+    updateStatusDot('status-dot-aws', data.aws);
+    updateStatusDot('status-dot-azure', data.azure);
+    updateStatusDot('status-dot-gcp', data.gcp);
+}
 
-    new Chart(document.getElementById('donutChart'), {
-        type: 'doughnut',
-        data: {
-            labels: donutLabels,
-            datasets: [{ data: donutValues, backgroundColor: donutColors, borderWidth: 2, borderColor: '#161b22' }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#8b949e', font: { size: 11 }, padding: 12 } },
-                tooltip: { callbacks: { label: ctx => ` ${sym}${ctx.parsed.toFixed(2)}` } }
-            }
-        }
-    });
+function updateStatusDot(id, pData) {
+    const el = document.getElementById(id);
+    if (!el) return;
 
-    // ── Chart 3: Top Services Bar ────────────────────────────────────────────────
-    const svcLabels = services.map(s => s.name.replace('Amazon ', '').replace('AWS ', ''));
-    const svcValues = services.map(s => s.amount * rate);
-
-    new Chart(document.getElementById('servicesChart'), {
-        type: 'bar',
-        data: {
-            labels: svcLabels.length ? svcLabels : ['No Data'],
-            datasets: [{
-                label: 'Cost',
-                data: svcValues.length ? svcValues : [0],
-                backgroundColor: ['#FF9900', '#ffb84d', '#ffd699', '#ffe5b3', '#fff2d9'],
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ` ${sym}${ctx.parsed.x.toFixed(2)}` } }
-            },
-            scales: {
-                x: { ticks: { color: '#8b949e', font: { size: 10 }, callback: v => `${sym}${v}` }, grid: { color: '#21262d' } },
-                y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { display: false } }
-            }
-        }
-    });
-
-    // ── Chart 4: Budget Gauge (Doughnut) ────────────────────────────────────────
-    const gaugeUsed = Math.min(data.totalGlobal, budgetLimit);
-    const gaugeRemaining = Math.max(budgetLimit - data.totalGlobal, 0);
-    const gaugeColor = budgetPct >= 100 ? '#f85149' : budgetPct >= 80 ? '#d29922' : '#3fb950';
-
-    new Chart(document.getElementById('gaugeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Used', 'Remaining'],
-            datasets: [{
-                data: [gaugeUsed, gaugeRemaining],
-                backgroundColor: [gaugeColor, '#21262d'],
-                borderWidth: 0,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            circumference: 180,
-            rotation: -90,
-            cutout: '70%',
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ` ${sym}${ctx.parsed.toFixed(2)}` } }
-            }
-        },
-        plugins: [{
-            id: 'gaugeText',
-            afterDraw(chart) {
-                const { ctx, chartArea: { top, width, height } } = chart;
-                ctx.save();
-                ctx.font = 'bold 18px Inter, sans-serif';
-                ctx.fillStyle = '#e6edf3';
-                ctx.textAlign = 'center';
-                ctx.fillText(`${budgetPct.toFixed(0)}%`, width / 2, top + height * 0.85);
-                ctx.font = '11px Inter, sans-serif';
-                ctx.fillStyle = '#8b949e';
-                ctx.fillText('of budget', width / 2, top + height * 0.85 + 18);
-                ctx.restore();
-            }
-        }]
-    });
-
-    // ── Chart 5: Forecast vs Actual Bar ─────────────────────────────────────────
-    new Chart(document.getElementById('forecastChart'), {
-        type: 'bar',
-        data: {
-            labels: ['AWS', 'Azure', 'GCP'],
-            datasets: [
-                {
-                    label: 'Actual (MTD)',
-                    data: [awsCost * rate, azureCost * rate, gcpCost * rate],
-                    backgroundColor: 'rgba(88,166,255,0.7)',
-                    borderRadius: 4,
-                },
-                {
-                    label: 'Forecast (EOM)',
-                    data: [awsForecast * rate, azureForecast * rate, gcpForecast * rate],
-                    backgroundColor: 'rgba(188,140,255,0.7)',
-                    borderRadius: 4,
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#8b949e', font: { size: 11 } } },
-                tooltip: { callbacks: { label: ctx => ` ${sym}${ctx.parsed.y.toFixed(2)}` } }
-            },
-            scales: {
-                x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { display: false } },
-                y: { ticks: { color: '#8b949e', font: { size: 10 }, callback: v => `${sym}${v}` }, grid: { color: '#21262d' } }
-            }
-        }
-    });
-
-});
+    if (pData?.error) {
+        el.classList.remove('bg-emerald-500', 'bg-slate-600');
+        el.classList.add('bg-rose-500'); // Error
+    } else if (pData?.totalCost !== undefined) {
+        el.classList.remove('bg-slate-600', 'bg-rose-500');
+        el.classList.add('bg-emerald-500'); // Active
+        el.classList.add('shadow-[0_0_6px_rgba(16,185,129,0.8)]');
+    } else {
+        el.classList.add('bg-slate-600'); // Inactive/Loading
+    }
+}
