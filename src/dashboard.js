@@ -1,6 +1,7 @@
 import { Chart } from "chart.js/auto"; // Not used but could be. We use SVG manual rendering here to match design.
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('--- CloudSight Dashboard v1.1 Loaded ---');
     // 1. Interactive Handlers (Navigation, Buttons)
     setupInteractions();
 

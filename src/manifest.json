@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Cloud Command Center",
-    "version": "1.0",
+    "name": "CloudSight Enterprise",
+    "version": "1.1",
     "description": "Real-time cost monitoring and system health dashboard for AWS, Azure, and GCP.",
     "permissions": [
         "storage",

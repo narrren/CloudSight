@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('--- CloudSight Popup v1.1 Loaded ---');
     // 1. Navigation Listeners (Always active)
     setupNavigation();
 
