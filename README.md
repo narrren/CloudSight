@@ -49,8 +49,21 @@ A "Pro-Grade" Chrome Extension that visualizes **AWS, Azure, and Google Cloud (G
 2. **General Settings**: Select your preferred currency and enable encryption.
 3. Enter credentials for your cloud providers (AWS, Azure, GCP).
 4. Click **Test Connection** to verify your keys.
-   - *Note: For AWS errors, see [AWS_PERMISSION_FIX.md](AWS_PERMISSION_FIX.md)*.
+   - *Note: Ensure your AWS user has `AWSCostExplorerReadOnlyAccess`. See Troubleshooting below.*.
 5. Save.
+
+## Troubleshooting
+
+### AWS "GetCostAndUsage" Access Denied
+If you see an error like `User is not authorized to perform: ce:GetCostAndUsage`, your IAM user needs permission to read billing data.
+
+**Quick Fix:**
+1. Go to AWS IAM Console -> Users -> Your User.
+2. Add Permissions -> Attach policies directly.
+3. Search for and attach **`AWSCostExplorerReadOnlyAccess`**.
+
+**Root User Note:**
+If you are using the Root account (not recommended), you must enable **"IAM User and Role Access to Billing Information"** in your Account Settings.
 
 ## Architecture
 - **Manifest V3**: Secure and performant extension architecture.
