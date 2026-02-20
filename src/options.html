@@ -1,663 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>Cloud Command Center – Settings</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --surface2: #21262d;
-            --border: #30363d;
-            --text: #e6edf3;
-            --muted: #8b949e;
-            --aws: #FF9900;
-            --azure: #0078D4;
-            --gcp: #4285F4;
-            --green: #3fb950;
-            --red: #f85149;
-            --yellow: #d29922;
-            --accent: #58a6ff;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ── Top Bar ── */
-        .topbar {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 14px 28px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .topbar-logo {
-            font-size: 20px;
-        }
-
-        .topbar-title {
-            font-size: 15px;
-            font-weight: 700;
-        }
-
-        .topbar-sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-left: auto;
-        }
-
-        /* ── Layout ── */
-        .layout {
-            display: flex;
-            flex: 1;
-            max-width: 860px;
-            margin: 32px auto;
-            width: 100%;
-            gap: 24px;
-            padding: 0 20px;
-        }
-
-        /* ── Sidebar Nav ── */
-        .sidenav {
-            width: 200px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .sidenav-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 8px 10px 4px;
-        }
-
-        .sidenav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--muted);
-            transition: all 0.15s;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .sidenav-item:hover {
-            background: var(--surface);
-            color: var(--text);
-        }
-
-        .sidenav-item.active {
-            background: var(--surface);
-            color: var(--text);
-            font-weight: 600;
-        }
-
-        .sidenav-item .icon {
-            font-size: 15px;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* ── Main Panel ── */
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* ── Section Card ── */
-        .section-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .section-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-icon {
-            font-size: 18px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .section-desc {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 1px;
-        }
-
-        .section-badge {
-            margin-left: auto;
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .badge-connected {
-            background: rgba(63, 185, 80, 0.15);
-            color: var(--green);
-        }
-
-        .badge-nc {
-            background: rgba(139, 148, 158, 0.12);
-            color: var(--muted);
-        }
-
-        .badge-warn {
-            background: rgba(210, 153, 34, 0.15);
-            color: var(--yellow);
-        }
-
-        .section-body {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        /* ── Form Fields ── */
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .field label {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .field label .required {
-            color: var(--red);
-        }
-
-        .field input,
-        .field select,
-        .field textarea {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            padding: 9px 12px;
-            transition: border-color 0.15s, box-shadow 0.15s;
-            outline: none;
-            width: 100%;
-        }
-
-        .field input:focus,
-        .field select:focus,
-        .field textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
-        }
-
-        .field input[type="password"] {
-            letter-spacing: 0.1em;
-        }
-
-        .field textarea {
-            resize: vertical;
-            min-height: 90px;
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .field select option {
-            background: var(--surface2);
-        }
-
-        .field-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        /* ── Toggle ── */
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: var(--surface2);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .toggle-info .toggle-title {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .toggle-info .toggle-desc {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 40px;
-            height: 22px;
-            flex-shrink: 0;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            inset: 0;
-            background: var(--border);
-            border-radius: 22px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .toggle-slider::before {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            left: 3px;
-            top: 3px;
-            background: #fff;
-            border-radius: 50%;
-            transition: transform 0.2s;
-        }
-
-        .toggle-switch input:checked+.toggle-slider {
-            background: var(--green);
-        }
-
-        .toggle-switch input:checked+.toggle-slider::before {
-            transform: translateX(18px);
-        }
-
-        /* ── Hint Box ── */
-        .hint {
-            display: flex;
-            gap: 10px;
-            padding: 10px 14px;
-            background: rgba(88, 166, 255, 0.07);
-            border: 1px solid rgba(88, 166, 255, 0.2);
-            border-radius: 8px;
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .hint-icon {
-            font-size: 14px;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
-        .hint a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .hint a:hover {
-            text-decoration: underline;
-        }
-
-        .warn-hint {
-            background: rgba(210, 153, 34, 0.07);
-            border-color: rgba(210, 153, 34, 0.25);
-        }
-
-        /* ── Save Bar ── */
-        .save-bar {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .status-msg {
-            font-size: 13px;
-            color: var(--muted);
-            flex: 1;
-        }
-
-        .status-msg.success {
-            color: var(--green);
-        }
-
-        .status-msg.error {
-            color: var(--red);
-        }
-
-        .btn {
-            padding: 9px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: opacity 0.15s, transform 0.1s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn-primary {
-            background: #238636;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #2ea043;
-        }
-
-        .btn-secondary {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border);
-        }
-
-        .btn-danger {
-            background: rgba(248, 81, 73, 0.15);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            color: var(--red);
-        }
-
-        .btn-danger:hover {
-            background: rgba(248, 81, 73, 0.25);
-        }
-
-        /* ── Divider ── */
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudSight Settings</title>
+    <link href="options.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
 
-<body>
+<body class="bg-background-dark text-slate-200 min-h-screen font-sans selection:bg-primary selection:text-white">
+    <div class="max-w-4xl mx-auto p-6 lg:p-12">
+        <!-- Header -->
+        <header class="flex items-center gap-4 mb-10 border-b border-border-dark pb-6">
+            <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-3xl">cloud_sync</span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">CloudSight Settings</h1>
+                <p class="text-muted-text mt-1">Manage your cloud credentials and preferences securely.</p>
+            </div>
+        </header>
 
-    <!-- Top Bar -->
-    <div class="topbar">
-        <div class="topbar-logo">☁️</div>
-        <div>
-            <div class="topbar-title">Cloud Command Center</div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <!-- Sidebar Navigation -->
+            <nav class="space-y-2">
+                <button data-tab="general"
+                    class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 bg-primary/10 text-white font-medium ring-1 ring-primary/20">
+                    <span class="material-symbols-outlined text-[20px]">tune</span>
+                    General
+                </button>
+                <button data-tab="aws"
+                    class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-slate-400 hover:bg-card-dark hover:text-slate-200 transition-all duration-200">
+                    <span class="material-symbols-outlined text-[20px]">dns</span>
+                    AWS
+                </button>
+                <button data-tab="azure"
+                    class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-slate-400 hover:bg-card-dark hover:text-slate-200 transition-all duration-200">
+                    <span class="material-symbols-outlined text-[20px]">grid_view</span>
+                    Azure
+                </button>
+                <button data-tab="gcp"
+                    class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-slate-400 hover:bg-card-dark hover:text-slate-200 transition-all duration-200">
+                    <span class="material-symbols-outlined text-[20px]">deployed_code</span>
+                    GCP
+                </button>
+            </nav>
+
+            <!-- Content Area -->
+            <main class="md:col-span-3">
+                <div id="status-msg"
+                    class="hidden mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    Settings saved successfully!
+                </div>
+
+                <!-- General Settings -->
+                <div id="sect-general" class="tab-content space-y-6">
+                    <div class="bg-card-dark border border-border-dark rounded-xl p-6 shadow-sm">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">public</span>
+                            Global Preferences
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label
+                                    class="block text-xs font-medium text-muted-text mb-1.5 uppercase tracking-wider">Display
+                                    Currency</label>
+                                <select id="currency"
+                                    class="w-full bg-slate-800 border border-border-dark rounded-lg px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer hover:bg-slate-750">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="INR">INR (₹)</option>
+                                    <option value="JPY">JPY (¥)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-xs font-medium text-muted-text mb-1.5 uppercase tracking-wider">Monthly
+                                    Budget Goal</label>
+                                <div class="relative">
+                                    <input type="number" id="budget-limit" placeholder="1000"
+                                        class="w-full bg-slate-800 border border-border-dark rounded-lg px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-600">
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-border-dark">
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" id="encrypt" class="peer sr-only">
+                                        <div
+                                            class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span
+                                            class="block text-sm font-medium text-white group-hover:text-primary transition-colors">Encrypt
+                                            Storage</span>
+                                        <span class="block text-xs text-muted-text mt-1">Secure credentials with AES-GCM
+                                            local encryption. Keys never leave your device.</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AWS Settings -->
+                <div id="sect-aws" class="tab-content hidden space-y-6">
+                    <div class="bg-card-dark border border-border-dark rounded-xl p-6 shadow-sm">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#FF9900]">dns</span>
+                            AWS Configuration
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="aws-key" class="block text-sm font-medium text-slate-300 mb-2">Access Key
+                                    ID</label>
+                                <input type="text" id="aws-key"
+                                    class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#FF9900] focus:border-transparent outline-none font-mono text-sm placeholder-slate-600"
+                                    placeholder="AKIA...">
+                            </div>
+                            <div>
+                                <label for="aws-secret" class="block text-sm font-medium text-slate-300 mb-2">Secret
+                                    Access Key</label>
+                                <input type="password" id="aws-secret"
+                                    class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#FF9900] focus:border-transparent outline-none font-mono text-sm placeholder-slate-600"
+                                    placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY">
+                            </div>
+                            <div class="bg-blue-500/10 border border-blue-500/20 rounded p-4 mt-2">
+                                <p class="text-xs text-blue-200">
+                                    <strong>Permissions Required:</strong> Create an IAM user with
+                                    <code>ce:GetCostAndUsage</code> policy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Azure Settings -->
+                <div id="sect-azure" class="tab-content hidden space-y-6">
+                    <div class="bg-card-dark border border-border-dark rounded-xl p-6 shadow-sm">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#0078D4]">grid_view</span>
+                            Azure Configuration
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="az-sub"
+                                        class="block text-sm font-medium text-slate-300 mb-2">Subscription ID</label>
+                                    <input type="text" id="az-sub"
+                                        class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#0078D4] focus:border-transparent outline-none font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label for="az-tenant" class="block text-sm font-medium text-slate-300 mb-2">Tenant
+                                        ID</label>
+                                    <input type="text" id="az-tenant"
+                                        class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#0078D4] focus:border-transparent outline-none font-mono text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="az-client" class="block text-sm font-medium text-slate-300 mb-2">Client ID
+                                    (App ID)</label>
+                                <input type="text" id="az-client"
+                                    class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#0078D4] focus:border-transparent outline-none font-mono text-sm">
+                            </div>
+                            <div>
+                                <label for="az-secret" class="block text-sm font-medium text-slate-300 mb-2">Client
+                                    Secret</label>
+                                <input type="password" id="az-secret"
+                                    class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#0078D4] focus:border-transparent outline-none font-mono text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GCP Settings -->
+                <div id="sect-gcp" class="tab-content hidden space-y-6">
+                    <div class="bg-card-dark border border-border-dark rounded-xl p-6 shadow-sm">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#DB4437]">deployed_code</span>
+                            GCP Configuration
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="gcp-json" class="block text-sm font-medium text-slate-300 mb-2">Service
+                                    Account JSON</label>
+                                <textarea id="gcp-json" rows="8"
+                                    class="w-full bg-slate-950 border border-border-dark rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#DB4437] focus:border-transparent outline-none font-mono text-xs placeholder-slate-600"
+                                    placeholder='{
+  "type": "service_account",
+  "project_id": "my-project",
+  ...
+}'></textarea>
+                            </div>
+                            <div class="bg-blue-500/10 border border-blue-500/20 rounded p-4 mt-2">
+                                <p class="text-xs text-blue-200">
+                                    <strong>Permissions Required:</strong> Service Account with
+                                    <code>Billing Account Viewer</code> role.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="mt-8 pt-6 border-t border-border-dark flex justify-end items-center gap-4">
+                    <button id="btn-save"
+                        class="px-8 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2">
+                        <span class="material-symbols-outlined">save</span>
+                        Save Configuration
+                    </button>
+                </div>
+            </main>
         </div>
-        <div class="topbar-sub">Settings &amp; Credentials</div>
     </div>
-
-    <div class="layout">
-
-        <!-- Sidebar Nav -->
-        <nav class="sidenav">
-            <div class="sidenav-label">Configuration</div>
-            <button class="sidenav-item active" onclick="scrollTo('general')"><span class="icon">⚙️</span>
-                General</button>
-            <button class="sidenav-item" onclick="scrollTo('aws')"><span class="icon">🟠</span> AWS</button>
-            <button class="sidenav-item" onclick="scrollTo('azure')"><span class="icon">🔵</span> Azure</button>
-            <button class="sidenav-item" onclick="scrollTo('gcp')"><span class="icon">🔷</span> GCP</button>
-            <div class="sidenav-label" style="margin-top:8px;">Actions</div>
-            <button class="sidenav-item" onclick="document.getElementById('save').click()"><span class="icon">💾</span>
-                Save</button>
-            <button class="sidenav-item" onclick="clearAll()" style="color:var(--red)"><span class="icon">🗑️</span>
-                Clear All</button>
-        </nav>
-
-        <!-- Main Panel -->
-        <div class="panel">
-
-            <!-- General Settings -->
-            <div class="section-card" id="general">
-                <div class="section-header">
-                    <div class="section-icon">⚙️</div>
-                    <div>
-                        <div class="section-title">General Settings</div>
-                        <div class="section-desc">Display preferences and security options</div>
-                    </div>
-                </div>
-                <div class="section-body">
-                    <div class="field">
-                        <label>Preferred Currency</label>
-                        <select id="currency">
-                            <option value="USD">🇺🇸 USD – US Dollar ($)</option>
-                            <option value="EUR">🇪🇺 EUR – Euro (€)</option>
-                            <option value="GBP">🇬🇧 GBP – British Pound (£)</option>
-                            <option value="INR">🇮🇳 INR – Indian Rupee (₹)</option>
-                            <option value="JPY">🇯🇵 JPY – Japanese Yen (¥)</option>
-                        </select>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <div class="toggle-title">🔐 Encrypt Stored Credentials</div>
-                            <div class="toggle-desc">Uses AES-GCM (Web Crypto API) to encrypt keys at rest</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="encryptStore">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="hint warn-hint">
-                        <span class="hint-icon">⚠️</span>
-                        <span>All credentials are stored <strong>locally on your device only</strong>. They are never
-                            sent to any external server. Always use <strong>Read-Only IAM keys</strong>.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AWS -->
-            <div class="section-card" id="aws">
-                <div class="section-header">
-                    <div class="section-icon">🟠</div>
-                    <div>
-                        <div class="section-title">Amazon Web Services</div>
-                        <div class="section-desc">Cost Explorer API – requires read-only IAM access</div>
-                    </div>
-                    <div class="section-badge badge-nc" id="aws-badge">Not Connected</div>
-                </div>
-                <div class="section-body">
-                    <div class="hint">
-                        <span class="hint-icon">ℹ️</span>
-                        <span>Create an IAM user with <strong>ReadOnlyAccess</strong> or
-                            <strong>AWSBillingReadOnlyAccess</strong> policy. <a
-                                href="https://console.aws.amazon.com/iam/" target="_blank">Open IAM Console →</a></span>
-                    </div>
-                    <div class="field-row">
-                        <div class="field">
-                            <label>Access Key ID <span class="required">*</span></label>
-                            <input type="text" id="awsKey" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off"
-                                spellcheck="false">
-                        </div>
-                        <div class="field">
-                            <label>Secret Access Key <span class="required">*</span></label>
-                            <input type="password" id="awsSecret" placeholder="••••••••••••••••••••••••••••••••••••••••"
-                                autocomplete="new-password">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Azure -->
-            <div class="section-card" id="azure">
-                <div class="section-header">
-                    <div class="section-icon">🔵</div>
-                    <div>
-                        <div class="section-title">Microsoft Azure</div>
-                        <div class="section-desc">Cost Management API – requires a Service Principal</div>
-                    </div>
-                    <div class="section-badge badge-nc" id="azure-badge">Not Connected</div>
-                </div>
-                <div class="section-body">
-                    <div class="hint">
-                        <span class="hint-icon">ℹ️</span>
-                        <span>Register an App in <a
-                                href="https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps"
-                                target="_blank">Azure AD →</a> and assign it the <strong>Cost Management Reader</strong>
-                            role on your subscription.</span>
-                    </div>
-                    <div class="field-row">
-                        <div class="field">
-                            <label>Tenant ID <span class="required">*</span></label>
-                            <input type="text" id="azTenant" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                autocomplete="off" spellcheck="false">
-                        </div>
-                        <div class="field">
-                            <label>Client (App) ID <span class="required">*</span></label>
-                            <input type="text" id="azClient" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                autocomplete="off" spellcheck="false">
-                        </div>
-                    </div>
-                    <div class="field-row">
-                        <div class="field">
-                            <label>Client Secret <span class="required">*</span></label>
-                            <input type="password" id="azSecret" placeholder="••••••••••••••••••••••••••••••••"
-                                autocomplete="new-password">
-                        </div>
-                        <div class="field">
-                            <label>Subscription ID <span class="required">*</span></label>
-                            <input type="text" id="azSub" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                autocomplete="off" spellcheck="false">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GCP -->
-            <div class="section-card" id="gcp">
-                <div class="section-header">
-                    <div class="section-icon">🔷</div>
-                    <div>
-                        <div class="section-title">Google Cloud Platform</div>
-                        <div class="section-desc">Cloud Billing API – requires a Service Account JSON key</div>
-                    </div>
-                    <div class="section-badge badge-nc" id="gcp-badge">Not Connected</div>
-                </div>
-                <div class="section-body">
-                    <div class="hint">
-                        <span class="hint-icon">ℹ️</span>
-                        <span>Create a Service Account with the <strong>Billing Account Viewer</strong> role. Download
-                            the JSON key and paste it below. <a
-                                href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">Open
-                                GCP Console →</a></span>
-                    </div>
-                    <div class="field">
-                        <label>Service Account JSON Key <span class="required">*</span></label>
-                        <textarea id="gcpJson"
-                            placeholder='{"type": "service_account", "project_id": "...", "private_key_id": "...", ...}'></textarea>
-                    </div>
-                    <div class="field">
-                        <label>Billing Account ID</label>
-                        <input type="text" id="gcpBillingId" placeholder="012345-567890-ABCDEF" autocomplete="off"
-                            spellcheck="false">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Save Bar -->
-            <div class="save-bar">
-                <div class="status-msg" id="status">Fill in your credentials above and click Save.</div>
-                <button class="btn btn-secondary" id="test-btn" onclick="testConnection()">🔌 Test Connection</button>
-                <button class="btn btn-primary" id="save">💾 Save All Credentials</button>
-            </div>
-
-        </div><!-- /panel -->
-    </div><!-- /layout -->
-
     <script src="options.js"></script>
-    <script>
-        function scrollTo(id) {
-            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            document.querySelectorAll('.sidenav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        }
-
-        function clearAll() {
-            if (!confirm('Clear all saved credentials? This cannot be undone.')) return;
-            chrome.storage.local.clear(() => {
-                const statusEl = document.getElementById('status');
-                statusEl.innerText = '✓ All credentials cleared.';
-                statusEl.className = 'status-msg success';
-                ['awsKey', 'awsSecret', 'azTenant', 'azClient', 'azSecret', 'azSub', 'gcpJson', 'gcpBillingId'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-                ['aws', 'azure', 'gcp'].forEach(p => {
-                    const b = document.getElementById(p + '-badge');
-                    if (b) { b.innerText = 'Not Connected'; b.className = 'section-badge badge-nc'; }
-                });
-            });
-        }
-
-        function testConnection() {
-            const status = document.getElementById('status');
-            status.innerText = '⏳ Sending test request to background…';
-            status.className = 'status-msg';
-            chrome.runtime.sendMessage({ action: 'FORCE_REFRESH' }, () => {
-                setTimeout(() => {
-                    status.innerText = '✓ Refresh triggered. Check the dashboard in ~10s.';
-                    status.className = 'status-msg success';
-                }, 1000);
-            });
-        }
-
-    </script>
 </body>
 
 </html>

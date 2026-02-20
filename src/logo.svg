@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 350">
+  <rect width="200" height="350" fill="#0B0E14"/>
+  <!-- Top Rhombus -->
+  <polygon points="100,20 180,70 100,120 20,70" fill="#FF9900"/>
+  <!-- Middle Triangle 1 -->
+  <polygon points="20,130 180,130 100,190" fill="#FF9900"/>
+  <!-- Middle Triangle 2 -->
+  <polygon points="20,200 180,200 100,260" fill="#FF9900"/>
+  <!-- Bottom Squares -->
+  <rect x="20" y="270" width="75" height="75" fill="#0078D4"/>
+  <rect x="105" y="270" width="75" height="75" fill="#0078D4"/>
+</svg>

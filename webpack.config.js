@@ -1,5 +1,6 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   mode: 'production',
@@ -9,24 +10,35 @@ module.exports = {
     options: './src/options.js',
     dashboard: './src/dashboard.js',
   },
-
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
     clean: true,
   },
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
+      },
+    ],
+  },
+  // Removed optimization.splitChunks to avoid chunk conflict.
+  // We will output a separate CSS file for each entry point.
   plugins: [
+    new MiniCssExtractPlugin({
+      filename: "[name].css", // Generate popup.css, dashboard.css, etc.
+    }),
     new CopyPlugin({
       patterns: [
         { from: 'src/manifest.json', to: '.' },
-        { from: 'src/popup.html', to: '.' },
-        { from: 'src/styles.css', to: '.', noErrorOnMissing: true },
-        { from: 'src/options.html', to: '.' },
+        { from: 'src/popup.html', to: '.', noErrorOnMissing: true },
+        { from: 'src/options.html', to: '.', noErrorOnMissing: true },
         { from: 'src/dashboard.html', to: '.', noErrorOnMissing: true },
-        { from: 'src/icon.png', to: '.', noErrorOnMissing: true },
-
+        // Copy assets folder if it exists, or individual icons
+        { from: 'src/assets', to: 'assets', noErrorOnMissing: true },
       ],
     }),
   ],
-  devtool: 'cheap-module-source-map',
+  devtool: false,
 };

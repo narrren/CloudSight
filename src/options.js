@@ -1,170 +1,167 @@
-import { encryptData } from './cryptoUtils';
+import './styles.css'; // Ensure CSS is extracted
+import { encryptData, decryptData } from './cryptoUtils';
 
-// ── Badge Helper ─────────────────────────────────────────────────────────────
-function setBadge(provider, state) {
-    const b = document.getElementById(`${provider}-badge`);
-    if (!b) return;
-    if (state === 'connected') {
-        b.innerText = '✓ Connected';
-        b.className = 'section-badge badge-connected';
-    } else if (state === 'encrypted') {
-        b.innerText = '🔐 Encrypted';
-        b.className = 'section-badge badge-warn';
-    } else {
-        b.innerText = 'Not Connected';
-        b.className = 'section-badge badge-nc';
-    }
-}
+// DOM Elements
+const tabs = document.querySelectorAll('.tab-btn');
+const sections = document.querySelectorAll('.tab-content');
+const btnSave = document.getElementById('btn-save');
+const msgStatus = document.getElementById('status-msg');
 
-// ── Live Badge Update as User Types ─────────────────────────────────────────
-function updateBadgesLive() {
-    const awsKey = document.getElementById('awsKey')?.value?.trim();
-    const awsSecret = document.getElementById('awsSecret')?.value?.trim();
-    const azClient = document.getElementById('azClient')?.value?.trim();
-    const gcpJson = document.getElementById('gcpJson')?.value?.trim();
+// Fields
+const elCurrency = document.getElementById('currency');
+const elBudget = document.getElementById('budget-limit'); // New Budget Field
+const elEncrypt = document.getElementById('encrypt');
 
-    setBadge('aws', awsKey && awsSecret ? 'connected' : 'nc');
-    setBadge('azure', azClient ? 'connected' : 'nc');
-    setBadge('gcp', gcpJson ? 'connected' : 'nc');
-}
+// AWS
+const elAwsKey = document.getElementById('aws-key');
+const elAwsSecret = document.getElementById('aws-secret');
 
-['awsKey', 'awsSecret'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', updateBadgesLive);
+// Azure
+const elAzSub = document.getElementById('az-sub');
+const elAzTenant = document.getElementById('az-tenant');
+const elAzClient = document.getElementById('az-client');
+const elAzSecret = document.getElementById('az-secret');
+
+// GCP
+const elGcpJson = document.getElementById('gcp-json');
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    handleHashNavigation();
 });
-['azTenant', 'azClient', 'azSecret', 'azSub'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', updateBadgesLive);
-});
-document.getElementById('gcpJson')?.addEventListener('input', updateBadgesLive);
 
-// ── Load Saved Values on Page Open ──────────────────────────────────────────
-chrome.storage.local.get(['cloudCreds', 'encryptedCreds', 'currency', 'isEncrypted'], (result) => {
-    // Currency
-    if (result.currency) {
-        const sel = document.getElementById('currency');
-        if (sel) sel.value = result.currency;
-    }
-    // Encryption toggle
-    if (result.isEncrypted) {
-        const chk = document.getElementById('encryptStore');
-        if (chk) chk.checked = true;
-    }
-
-    const creds = result.cloudCreds;
-
-    if (result.encryptedCreds && !creds) {
-        // Credentials are encrypted — show encrypted badge, can't pre-fill
-        setBadge('aws', 'encrypted');
-        setBadge('azure', 'encrypted');
-        setBadge('gcp', 'encrypted');
-        const statusEl = document.getElementById('status');
-        if (statusEl) {
-            statusEl.innerText = '🔐 Credentials are encrypted. Re-enter to update.';
-            statusEl.className = 'status-msg';
+function handleHashNavigation() {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+        const targetTab = document.querySelector(`.tab-btn[data-tab="${hash}"]`);
+        if (targetTab) {
+            // Simulate click
+            targetTab.click();
         }
-        return;
     }
+}
 
-    if (!creds) return;
-
-    // Pre-fill AWS
-    if (creds.aws?.key) {
-        const k = document.getElementById('awsKey');
-        const s = document.getElementById('awsSecret');
-        if (k) k.value = creds.aws.key;
-        if (s) s.value = creds.aws.secret || '';
-        setBadge('aws', 'connected');
-    }
-
-    // Pre-fill Azure
-    if (creds.azure?.client) {
-        const fields = { azTenant: 'tenant', azClient: 'client', azSecret: 'secret', azSub: 'sub' };
-        Object.entries(fields).forEach(([elId, key]) => {
-            const el = document.getElementById(elId);
-            if (el) el.value = creds.azure[key] || '';
+// --- Tab Logic ---
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Reset state
+        tabs.forEach(t => {
+            t.classList.remove('bg-primary/10', 'text-white', 'ring-1', 'ring-primary/20');
+            t.classList.add('text-slate-400', 'hover:bg-card-dark', 'hover:text-slate-200');
         });
-        setBadge('azure', 'connected');
-    }
+        sections.forEach(s => s.classList.add('hidden'));
 
-    // Pre-fill GCP
-    if (creds.gcp?.json) {
-        const j = document.getElementById('gcpJson');
-        const b = document.getElementById('gcpBillingId');
-        if (j) j.value = creds.gcp.json || '';
-        if (b) b.value = creds.gcp.billingId || '';
-        setBadge('gcp', 'connected');
-    }
+        // Activate clicked
+        tab.classList.remove('text-slate-400', 'hover:bg-card-dark', 'hover:text-slate-200');
+        tab.classList.add('bg-primary/10', 'text-white', 'ring-1', 'ring-primary/20');
+
+        const targetId = tab.dataset.tab;
+        document.getElementById(`sect-${targetId}`).classList.remove('hidden');
+    });
 });
 
-// ── Save Handler ─────────────────────────────────────────────────────────────
-document.getElementById('save').addEventListener('click', async () => {
-    const currency = document.getElementById('currency').value;
-    const useEncryption = document.getElementById('encryptStore').checked;
+// --- Save Logic ---
+btnSave.addEventListener('click', async () => {
+    btnSave.disabled = true;
+    btnSave.innerText = "Saving...";
 
+    // Construct Creds Object
     const creds = {
         aws: {
-            key: document.getElementById('awsKey').value.trim(),
-            secret: document.getElementById('awsSecret').value.trim()
+            key: elAwsKey.value.trim(),
+            secret: elAwsSecret.value.trim()
         },
         azure: {
-            tenant: document.getElementById('azTenant').value.trim(),
-            client: document.getElementById('azClient').value.trim(),
-            secret: document.getElementById('azSecret').value.trim(),
-            sub: document.getElementById('azSub').value.trim()
+            subscriptionId: elAzSub.value.trim(),
+            tenantId: elAzTenant.value.trim(),
+            clientId: elAzClient.value.trim(),
+            clientSecret: elAzSecret.value.trim()
         },
         gcp: {
-            json: document.getElementById('gcpJson').value.trim(),
-            billingId: document.getElementById('gcpBillingId').value.trim()
+            json: elGcpJson.value.trim()
         }
     };
 
-    // Validate: at least one provider must be filled
-    const hasAWS = creds.aws.key && creds.aws.secret;
-    const hasAzure = creds.azure.client && creds.azure.secret;
-    const hasGCP = creds.gcp.json;
+    const currency = elCurrency.value;
+    const budgetLimit = parseFloat(elBudget.value) || 1000;
+    const useEncryption = elEncrypt.checked;
 
-    if (!hasAWS && !hasAzure && !hasGCP) {
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = '⚠ Please fill in at least one provider\'s credentials.';
-        statusEl.className = 'status-msg error';
-        return;
-    }
+    try {
+        const storageData = { currency, budgetLimit };
 
-    let storagePayload = { currency, isEncrypted: useEncryption };
-
-    if (useEncryption) {
-        try {
-            const encryptedCreds = await encryptData(creds);
-            storagePayload.encryptedCreds = encryptedCreds;
-            storagePayload.cloudCreds = null;
-        } catch (e) {
-            alert('Encryption failed: ' + e);
-            return;
-        }
-    } else {
-        storagePayload.cloudCreds = creds;
-        storagePayload.encryptedCreds = null;
-    }
-
-    chrome.storage.local.set(storagePayload, () => {
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = '✓ Credentials saved successfully!';
-        statusEl.className = 'status-msg success';
-        setTimeout(() => {
-            statusEl.innerText = 'Fill in your credentials above and click Save.';
-            statusEl.className = 'status-msg';
-        }, 4000);
-
-        // Update badges immediately after save
         if (useEncryption) {
-            setBadge('aws', 'encrypted');
-            setBadge('azure', 'encrypted');
-            setBadge('gcp', 'encrypted');
+            // Encrypt and store in encryptedCreds
+            const encrypted = await encryptData(creds);
+            storageData.encryptedCreds = encrypted;
+            // Clear plain creds to be safe
+            storageData.cloudCreds = null;
         } else {
-            setBadge('aws', hasAWS ? 'connected' : 'nc');
-            setBadge('azure', hasAzure ? 'connected' : 'nc');
-            setBadge('gcp', hasGCP ? 'connected' : 'nc');
+            // Store plain text
+            storageData.cloudCreds = creds;
+            storageData.encryptedCreds = null;
         }
 
-        chrome.runtime.sendMessage({ action: 'FORCE_REFRESH' });
-    });
+        await chrome.storage.local.set(storageData);
+
+        // Trigger background refresh
+        chrome.runtime.sendMessage({ action: "FORCE_REFRESH" });
+
+        showStatus("Configuration saved successfully! Data fetch triggered.");
+    } catch (err) {
+        // console.error("Save failed", err);
+        showStatus("Error saving settings: " + err.message, true);
+    } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = '<span class="material-symbols-outlined">save</span> Save Configuration';
+    }
 });
+
+function showStatus(msg, isError = false) {
+    msgStatus.innerText = msg;
+    msgStatus.className = isError
+        ? "mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium flex items-center gap-2"
+        : "mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium flex items-center gap-2";
+    msgStatus.classList.remove('hidden');
+    setTimeout(() => msgStatus.classList.add('hidden'), 5000);
+}
+
+// --- Load Logic ---
+async function loadSettings() {
+    chrome.storage.local.get(['currency', 'budgetLimit', 'cloudCreds', 'encryptedCreds'], async (result) => {
+        if (result.currency) elCurrency.value = result.currency;
+        if (result.budgetLimit) elBudget.value = result.budgetLimit;
+
+        let creds = result.cloudCreds;
+
+        // Auto-detect encryption status based on data presence
+        if (result.encryptedCreds && !creds) {
+            elEncrypt.checked = true;
+            try {
+                creds = await decryptData(result.encryptedCreds);
+            } catch (e) {
+                console.error("Failed to decrypt for UI", e);
+                showStatus("Could not decrypt existing credentials. Please re-enter.", true);
+            }
+        } else {
+            elEncrypt.checked = false;
+        }
+
+        if (creds) {
+            // Populate Fields
+            if (creds.aws) {
+                elAwsKey.value = creds.aws.key || '';
+                elAwsSecret.value = creds.aws.secret || '';
+            }
+            if (creds.azure) {
+                elAzSub.value = creds.azure.subscriptionId || '';
+                elAzTenant.value = creds.azure.tenantId || '';
+                elAzClient.value = creds.azure.clientId || '';
+                elAzSecret.value = creds.azure.clientSecret || '';
+            }
+            if (creds.gcp) {
+                elGcpJson.value = creds.gcp.json || '';
+            }
+        }
+    });
+}

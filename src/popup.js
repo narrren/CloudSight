@@ -1,122 +1,107 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('--- CloudSight Popup v1.1 Loaded ---');
-    // 1. Navigation Listeners (Always active)
-    setupNavigation();
+import './styles.css';
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
 
-    // 2. Load Real Data
-    await loadPopupData();
+    document.getElementById('btn-open-dashboard').addEventListener('click', () => {
+        chrome.tabs.create({ url: 'dashboard.html' });
+    });
+
+    document.getElementById('btn-settings').addEventListener('click', () => {
+        chrome.runtime.openOptionsPage();
+    });
 });
 
-async function loadPopupData() {
-    const result = await chrome.storage.local.get(['dashboardData']);
-    const data = result.dashboardData;
-
-    if (!data) {
-        document.getElementById('total-spend').innerText = '$0.00';
-        document.getElementById('forecast-spend').innerText = '$0.00';
-        return;
-    }
-
-    const currency = data.currency || 'USD';
-    const total = data.totalGlobal || 0;
-
-    // Total Spend
-    const totalEl = document.getElementById('total-spend');
-    if (totalEl) totalEl.innerHTML = formatCurrency(total, currency);
-
-    // Forecast
-    const forecast = parseFloat(data.aws?.forecast || 0) + parseFloat(data.azure?.forecast || 0) + parseFloat(data.gcp?.forecast || 0);
-    const forecastEl = document.getElementById('forecast-spend');
-    if (forecastEl) forecastEl.innerText = formatCurrency(forecast, currency);
-
-    // Provider Status (Active/Inactive based on error or cost)
-    updateProviderStatus('filter-aws', data.aws);
-    updateProviderStatus('filter-azure', data.azure);
-    updateProviderStatus('filter-gcp', data.gcp);
-
-    // Services List
-    renderPopupServices(data);
-}
-
-function updateProviderStatus(id, providerData) {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    // Logic: Active if no error and totalCost defined (even if 0, it's connected)
-    // But user said "blank cause i have never used". So cost 0 is valid connection.
-    // If error property exists, it's disconnected/issue.
-    const isConnected = providerData && !providerData.error;
-
-    if (isConnected) {
-        el.classList.remove('grayscale', 'opacity-40');
-        el.classList.add('opacity-100');
-        el.setAttribute('title', 'Active');
-    } else {
-        el.classList.add('grayscale', 'opacity-40');
-        el.classList.remove('opacity-100');
-        el.setAttribute('title', 'Not Configured or Error');
-    }
-}
-
-function renderPopupServices(data) {
-    const list = document.getElementById('provider-list');
-    if (!list) return;
-
-    list.innerHTML = '';
-
-    let services = [];
-    if (data.aws?.services) services.push(...data.aws.services.map(s => ({ ...s, p: 'AWS', c: '#FF9900', i: 'dns' })));
-    if (data.azure?.services) services.push(...data.azure.services.map(s => ({ ...s, p: 'Azure', c: '#0078D4', i: 'database' })));
-    if (data.gcp?.services) services.push(...data.gcp.services.map(s => ({ ...s, p: 'GCP', c: '#DB4437', i: 'cloud_queue' })));
-
-    if (services.length === 0) {
-        list.innerHTML = `<div class="text-center text-slate-500 text-[10px] py-2">No active services.</div>`;
-        return;
-    }
-
-    services.sort((a, b) => b.amount - a.amount);
-    const top3 = services.slice(0, 3);
-    const maxVal = top3[0].amount || 1;
-
-    top3.forEach(s => {
-        const pct = (s.amount / maxVal) * 100;
-        const html = `
-        <div class="flex items-center gap-3 py-2 px-2 rounded hover:bg-white/5 transition-colors cursor-pointer group">
-            <div class="w-8 h-8 rounded flex items-center justify-center bg-[${s.c}]/10 border border-[${s.c}]/20 text-[${s.c}]" style="color:${s.c}; background-color: ${s.c}20;">
-                <span class="material-symbols-outlined text-[16px]">${s.i}</span>
-            </div>
-            <div class="flex-1">
-                <div class="flex justify-between text-[11px] mb-1">
-                    <span class="text-slate-200 font-medium group-hover:text-white">${s.name}</span>
-                    <span class="text-white font-mono font-semibold">${formatCurrency(s.amount)}</span>
-                </div>
-                <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full w-[65%] rounded-full shadow-[0_0_8px_rgba(255,153,0,0.4)]" 
-                         style="width: ${pct}%; background-color: ${s.c}"></div>
-                </div>
-            </div>
-        </div>`;
-        list.insertAdjacentHTML('beforeend', html);
+function loadData() {
+    chrome.storage.local.get(['dashboardData'], (result) => {
+        if (result.dashboardData) {
+            updatePopup(result.dashboardData);
+        }
     });
 }
 
-function formatCurrency(val, currency = 'USD') {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(val);
-}
+function updatePopup(data) {
+    const currency = data.currency || 'USD';
+    const rate = data.rate || 1.0;
+    const format = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(num);
 
-function setupNavigation() {
-    const btnOpen = document.getElementById('btn-open-dashboard');
-    if (btnOpen) {
-        btnOpen.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'dashboard.html' });
-        });
+    // 1. Total Spend
+    document.getElementById('popup-total-spend').innerText = format(data.totalGlobal || 0);
+
+    // 2. Forecast
+    let totalForecast = 0;
+    if (data.aws?.forecast) totalForecast += parseFloat(data.aws.forecast);
+    if (data.azure?.forecast) totalForecast += parseFloat(data.azure.forecast);
+    if (data.gcp?.forecast) totalForecast += parseFloat(data.gcp.forecast);
+
+    document.getElementById('popup-forecast-spend').innerText = format(totalForecast * rate);
+
+    // 3. Status
+    const statusDot = document.getElementById('popup-status-dot');
+    const statusText = document.getElementById('popup-status-text');
+    let errors = [];
+    if (data.aws?.error) errors.push("AWS");
+    if (data.azure?.error) errors.push("Azure");
+    if (data.gcp?.error) errors.push("GCP");
+
+    if (errors.length > 0) {
+        statusDot.classList.remove('bg-emerald-500');
+        statusDot.classList.add('bg-rose-500');
+        statusText.innerText = "Attention Needed";
+    } else {
+        statusDot.classList.remove('bg-rose-500');
+        statusDot.classList.add('bg-emerald-500');
+        statusText.innerText = "System Active";
     }
 
-    const btnSettings = document.getElementById('btn-settings');
-    if (btnSettings) {
-        btnSettings.addEventListener('click', () => {
-            if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
-            else window.open(chrome.runtime.getURL('options.html'));
-        });
+    // 4. Header Icons
+    const toggleIcon = (id, active) => {
+        const el = document.getElementById(id);
+        if (active) {
+            el.classList.remove('grayscale', 'opacity-40');
+        } else {
+            el.classList.add('grayscale', 'opacity-40');
+        }
+    };
+    // Check if distinct provider data exists > 0 or no error
+    toggleIcon('status-aws', (data.aws && !data.aws.error && data.aws.totalCost >= 0));
+    toggleIcon('status-azure', (data.azure && !data.azure.error && data.azure.totalCost >= 0));
+    toggleIcon('status-gcp', (data.gcp && !data.gcp.error && data.gcp.totalCost >= 0));
+
+    // 5. Services List (Top 3)
+    const listEl = document.getElementById('popup-services-list');
+    listEl.innerHTML = '';
+
+    let allServices = [];
+    if (data.aws?.services) data.aws.services.forEach(s => allServices.push({ ...s, provider: 'AWS', color: '#FF9900' }));
+    if (data.azure?.services) data.azure.services.forEach(s => allServices.push({ ...s, provider: 'Azure', color: '#0078D4' }));
+    if (data.gcp?.services) data.gcp.services.forEach(s => allServices.push({ ...s, provider: 'GCP', color: '#DB4437' }));
+
+    allServices.sort((a, b) => b.amount - a.amount);
+    const top3 = allServices.slice(0, 3);
+    const totalCalc = (data.aws?.totalCost || 0) + (data.azure?.totalCost || 0) + (data.gcp?.totalCost || 0);
+
+    top3.forEach(s => {
+        const amountConverted = s.amount * rate;
+        const pct = totalCalc > 0 ? (s.amount / totalCalc) * 100 : 0; // Use raw calculation for pct
+
+        const html = `
+        <div class="flex items-center gap-3 py-1">
+            <div class="w-6 h-6 rounded flex items-center justify-center bg-slate-800 text-[9px] font-bold border border-slate-700" style="color: ${s.color}">${s.provider}</div>
+            <div class="flex-1">
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-300 truncate w-24">${s.name}</span>
+                    <span class="text-white font-mono">${format(amountConverted)}</span>
+                </div>
+                <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full" style="width: ${pct}%; background-color: ${s.color}"></div>
+                </div>
+            </div>
+        </div>
+        `;
+        listEl.insertAdjacentHTML('beforeend', html);
+    });
+
+    if (top3.length === 0) {
+        listEl.innerHTML = '<div class="text-center text-[11px] text-slate-500">No active services found.</div>';
     }
 }

@@ -1,3 +1,4 @@
+<!-- CloudSight Command Center Dashboard -->
 <!DOCTYPE html>
 <html class="dark" lang="en">
 
@@ -12,44 +13,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css">
-
-    <!-- Custom Style Overrides to Match User Design without Rebuild -->
+    <link href="dashboard.css" rel="stylesheet">
     <style>
-        :root {
-            --color-primary: #5E6AD2;
-            --color-bg-dark: #0B0E14;
-            --color-card-dark: #151921;
-            --color-border-dark: #272B36;
-            --color-aws: #FF9900;
-            --color-azure: #0078D4;
-            --color-gcp: #DB4437;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-bg-dark);
             background-image: radial-gradient(circle at 50% 0%, #1a1f2e 0%, #0B0E14 60%);
-        }
-
-        .text-primary {
-            color: var(--color-primary) !important;
-        }
-
-        .bg-primary {
-            background-color: var(--color-primary) !important;
-        }
-
-        .bg-card-dark {
-            background-color: var(--color-card-dark) !important;
-        }
-
-        .border-border-dark {
-            border-color: var(--color-border-dark) !important;
-        }
-
-        .text-muted-text {
-            color: #8A8F98 !important;
         }
 
         ::-webkit-scrollbar {
@@ -78,13 +46,8 @@
 
         .text-gradient {
             background: linear-gradient(to right, #ffffff, #8A8F98);
-            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        .bg-subtle-grid {
-            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23272B36' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
         }
     </style>
 </head>
@@ -137,9 +100,9 @@
             <div class="space-y-1">
                 <p class="px-3 text-[11px] font-semibold text-muted-text/60 uppercase tracking-widest mb-2">Integration
                     Status</p>
-                <!-- AWS -->
-                <div id="sidebar-aws"
-                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md">
+                <!-- AWS Status -->
+                <div class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md"
+                    id="status-aws-container">
                     <div class="flex items-center gap-3">
                         <div class="w-5 h-5 flex items-center justify-center">
                             <svg class="text-[#FF9900] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
@@ -150,11 +113,12 @@
                         </div>
                         <span class="text-sm font-medium text-white">AWS</span>
                     </div>
-                    <div class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></div>
+                    <div class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+                        id="status-aws-dot"></div>
                 </div>
-                <!-- Azure -->
-                <div id="sidebar-azure"
-                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60 hover:opacity-100 transition-opacity">
+                <!-- Azure Status -->
+                <div class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60 hover:opacity-100 transition-opacity"
+                    id="status-azure-container">
                     <div class="flex items-center gap-3">
                         <div class="w-5 h-5 flex items-center justify-center">
                             <svg class="text-[#0078D4] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
@@ -166,12 +130,12 @@
                         <span
                             class="text-sm font-medium text-muted-text group-hover:text-white transition-colors">Azure</span>
                     </div>
-                    <span
-                        class="text-[10px] text-muted-text border border-border-dark px-1.5 py-0.5 rounded">Paused</span>
+                    <span class="text-[10px] text-muted-text border border-border-dark px-1.5 py-0.5 rounded"
+                        id="status-azure-text">Paused</span>
                 </div>
-                <!-- GCP -->
-                <div id="sidebar-gcp"
-                    class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60 hover:opacity-100 transition-opacity">
+                <!-- GCP Status -->
+                <div class="px-3 py-2 flex items-center justify-between group cursor-pointer hover:bg-white/5 rounded-md opacity-60 hover:opacity-100 transition-opacity"
+                    id="status-gcp-container">
                     <div class="flex items-center gap-3">
                         <div class="w-5 h-5 flex items-center justify-center">
                             <svg class="text-[#DB4437] w-full h-full" fill="currentColor" viewBox="0 0 24 24">
@@ -185,12 +149,13 @@
                         <span
                             class="text-sm font-medium text-muted-text group-hover:text-white transition-colors">GCP</span>
                     </div>
-                    <span class="text-[10px] text-muted-text border border-border-dark px-1.5 py-0.5 rounded">Off</span>
+                    <span class="text-[10px] text-muted-text border border-border-dark px-1.5 py-0.5 rounded"
+                        id="status-gcp-text">Off</span>
                 </div>
             </div>
             <div class="space-y-1 pt-4 border-t border-border-dark">
                 <a class="flex items-center gap-3 px-3 py-2 rounded-md text-muted-text hover:text-white hover:bg-white/5 transition-colors"
-                    href="#">
+                    href="options.html" id="nav-settings">
                     <span class="material-symbols-outlined text-[18px]">settings</span>
                     <span class="text-sm font-medium">Settings</span>
                 </a>
@@ -204,7 +169,8 @@
         <div class="p-4 border-t border-border-dark bg-[#0e121a]">
             <div class="flex items-center gap-3">
                 <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-purple-400 p-[1px]">
-                    <img alt="User" class="rounded-full bg-black h-full w-full object-cover" src="icon.png" />
+                    <img alt="User" class="rounded-full bg-black h-full w-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqS2PCfqFOZYGCQkQiddhdV2mnZCx-eHGXIL46mPkbDhHxUPcCPzJTy9fAvd6e2YCcCIw17_rs-sKKgeGxtIejVwXuNiNwNHQ3Z3Olw2XOZFSjOrQN6yfVOckpYxmJ-LOrx8EIgFe4dgl0gRUU-8zGHpPbJ1_PsRxwOl5IGo_QuiwOAj-CU36Mo04VzmtYyOh3Z2PBCuvnuJjhzzbfncklGvh_8LU9QhN3BrEq3FcUTJeSBnALLa5G4Qo6Zpju57nTJt6Pg15swSYn" />
                 </div>
                 <div class="flex flex-col">
                     <span class="text-xs font-semibold text-white">John Doe</span>
@@ -221,212 +187,261 @@
                 <h2 class="text-2xl font-bold text-gradient tracking-tight">Cloud Command Center</h2>
             </div>
             <div class="flex items-center gap-6">
-                <div
-                    class="hidden md:flex items-center gap-3 rounded-full border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+                <div class="hidden md:flex items-center gap-3 rounded-full border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.05)]"
+                    id="anomaly-badge" style="display:none !important;">
                     <span class="material-symbols-outlined text-amber-500 text-[18px] animate-pulse">warning</span>
                     <div class="flex flex-col">
                         <span
                             class="text-[11px] font-bold text-amber-500 uppercase tracking-widest leading-none">Anomaly
                             Detected</span>
-                        <span class="text-[10px] text-amber-400/80 leading-none mt-0.5">Spike in EC2 us-east-1</span>
+                        <span class="text-[10px] text-amber-400/80 leading-none mt-0.5">Spike in Cost</span>
                     </div>
                 </div>
                 <div
                     class="hidden sm:flex items-center gap-px rounded-lg border border-border-dark bg-card-dark p-1 shadow-sm">
-                    <button
+                    <button id="btn-1d"
                         class="px-3 py-1.5 text-xs font-medium text-muted-text hover:text-white transition-colors">1D</button>
-                    <button
+                    <button id="btn-7d"
                         class="px-3 py-1.5 text-xs font-medium text-muted-text hover:text-white transition-colors">7D</button>
-                    <button
+                    <button id="btn-30d"
                         class="bg-white/10 rounded-md px-3 py-1.5 text-xs font-medium text-white shadow-sm ring-1 ring-white/10">30D</button>
                     <div class="w-px h-4 bg-border-dark mx-1"></div>
-                    <button
+                    <button id="date-range-display"
                         class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-text hover:text-white transition-colors">
                         <span>Sep 20 - Oct 20</span>
                         <span class="material-symbols-outlined text-[14px]">calendar_today</span>
                     </button>
                 </div>
                 <button
-                    class="group relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-dark bg-card-dark text-muted-text transition-all hover:border-primary/50 hover:text-primary">
-                    <span class="material-symbols-outlined text-[20px]">search</span>
+                    class="group relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-dark bg-card-dark text-muted-text transition-all hover:border-primary/50 hover:text-primary"
+                    id="btn-refresh">
+                    <span class="material-symbols-outlined text-[20px]">refresh</span>
                 </button>
             </div>
         </header>
         <div class="p-8 max-w-[1600px] mx-auto space-y-8">
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Total Spend -->
-                <div
+                <div id="card-overview"
                     class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
                     <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span class="material-symbols-outlined text-6xl text-primary">payments</span>
                     </div>
-                    <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Total Spend (MTD)</p>
+                    <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Total Spend (Month)</p>
                     <div class="mt-4 flex items-baseline gap-2">
-                        <h3 id="kpi-total-spend" class="text-3xl font-bold text-white tracking-tight">$0.00</h3>
+                        <h3 class="text-3xl font-bold text-white tracking-tight" id="total-spend">...</h3>
                     </div>
                     <div class="mt-4 flex items-center gap-2">
                         <span
                             class="flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
-                            <span class="material-symbols-outlined text-[12px]">trending_up</span> 12%
+                            <span class="material-symbols-outlined text-[12px]">trending_up</span> <span
+                                id="trend-percent">0%</span>
                         </span>
                         <span class="text-[11px] text-muted-text">vs prev. month</span>
                     </div>
                 </div>
                 <!-- Forecast -->
-                <div
+                <div id="card-forecast"
                     class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
                     <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span class="material-symbols-outlined text-6xl text-indigo-500">query_stats</span>
                     </div>
                     <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Forecasted Spend</p>
                     <div class="mt-4 flex items-baseline gap-2">
-                        <h3 id="kpi-forecast" class="text-3xl font-bold text-white tracking-tight">$0.00</h3>
+                        <h3 class="text-3xl font-bold text-white tracking-tight" id="forecast-spend">...</h3>
                     </div>
                     <div class="mt-4 flex items-center gap-2">
                         <span
                             class="flex items-center gap-1 rounded bg-indigo-500/10 px-1.5 py-0.5 text-[11px] font-medium text-indigo-400 border border-indigo-500/20">
-                            +5% projected
+                            Calculated
                         </span>
-                        <span class="text-[11px] text-muted-text">variance</span>
+                        <span class="text-[11px] text-muted-text">linear projection</span>
                     </div>
                 </div>
-                <!-- Budget/Savings -->
-                <div id="savings-card"
-                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group flex justify-between items-center bg-gradient-to-br from-card-dark to-emerald-500/5">
+                <!-- Budget -->
+                <div id="card-budget"
+                    class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group flex justify-between items-center">
                     <div>
-                        <p
-                            class="text-xs font-medium text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">savings</span> Potential Savings
-                        </p>
+                        <p class="text-xs font-medium text-muted-text uppercase tracking-wider">Budget Used</p>
                         <div class="mt-4 flex items-baseline gap-2">
-                            <h3 id="kpi-savings" class="text-3xl font-bold text-white tracking-tight">$0<span
-                                    class="text-lg text-slate-400 font-medium">/mo</span></h3>
+                            <h3 class="text-3xl font-bold text-white tracking-tight" id="budget-used">0%</h3>
                         </div>
-                        <p class="mt-4 text-[11px] text-muted-text">3 Idle Instances, 14 Unattached</p>
+                        <p class="mt-4 text-[11px] text-muted-text"><span id="budget-remaining">...</span> remaining</p>
                     </div>
-                    <div
-                        class="relative h-14 w-14 flex items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-emerald-500 text-[28px]">price_check</span>
+                    <div class="relative h-16 w-16">
+                        <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-slate-800"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none" stroke="currentColor" stroke-width="3"></path>
+                            <path class="text-primary drop-shadow-[0_0_8px_rgba(94,106,210,0.5)]" id="budget-circle"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none" stroke="currentColor" stroke-dasharray="0, 100" stroke-linecap="round"
+                                stroke-width="3"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-muted-text text-[18px]">pie_chart</span>
+                        </div>
                     </div>
                 </div>
-                <!-- Note: Replaced user's 87% budget with the dynamic KPI savings logic we built correctly, while keeping user's generic card style -->
-
                 <!-- System Status -->
-                <div
+                <div id="card-system"
                     class="relative overflow-hidden rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:shadow-glow transition-all duration-300 group">
                     <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span class="material-symbols-outlined text-6xl text-amber-500">health_and_safety</span>
                     </div>
                     <p class="text-xs font-medium text-muted-text uppercase tracking-wider">System Status</p>
                     <div class="mt-4 flex items-center gap-2">
-                        <h3 class="text-3xl font-bold text-white tracking-tight">Active</h3>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span
-                            class="flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-500 border border-amber-500/20 animate-pulse">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                            1 Alert
-                        </span>
-                        <span class="text-[11px] text-muted-text">Last scan: Now</span>
+                        <h3 class="text-3xl font-bold text-white tracking-tight" id="system-status">Checking</h3>
                     </div>
                 </div>
             </div>
             <div class="grid grid-cols-12 gap-6">
-                <div
+                <!-- Chart -->
+                <div id="card-chart"
                     class="col-span-12 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm relative overflow-hidden">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                         <div>
                             <h3 class="text-lg font-semibold text-white">Cost Trend Analysis</h3>
                             <p class="text-sm text-muted-text mt-1">Multi-cloud expenditure forecast vs actual usage</p>
                         </div>
-                    </div>
-                    <div class="relative h-80 w-full">
-                        <div
-                            class="absolute inset-0 flex flex-col justify-between pointer-events-none text-xs text-muted-text/30 font-mono">
-                            <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$2000</span></div>
-                            <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$1500</span></div>
-                            <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$1000</span></div>
-                            <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$500</span></div>
-                            <div class="w-full border-b border-dashed border-border-dark/50 flex items-end">
-                                <span>$0</span></div>
+                        <div class="flex items-center gap-2 bg-[#0B0E14] rounded-lg p-1 border border-border-dark">
+                            <div id="toggle-aws"
+                                class="flex items-center px-3 py-1 bg-white/10 rounded border border-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                                <span class="w-2 h-2 rounded-full bg-[#FF9900] mr-2"></span>
+                                <span class="text-xs font-medium text-white">AWS</span>
+                            </div>
+                            <div id="toggle-azure"
+                                class="flex items-center px-3 py-1 cursor-pointer hover:bg-white/5 rounded transition-colors opacity-60 hover:opacity-100">
+                                <span class="w-2 h-2 rounded-full bg-[#0078D4] mr-2"></span>
+                                <span class="text-xs font-medium text-muted-text">Azure</span>
+                            </div>
+                            <div id="toggle-gcp"
+                                class="flex items-center px-3 py-1 cursor-pointer hover:bg-white/5 rounded transition-colors opacity-60 hover:opacity-100">
+                                <span class="w-2 h-2 rounded-full bg-[#DB4437] mr-2"></span>
+                                <span class="text-xs font-medium text-muted-text">GCP</span>
+                            </div>
                         </div>
-                        <svg id="trend-chart-svg" class="h-full w-full overflow-visible absolute inset-0"
-                            preserveAspectRatio="none" viewBox="0 0 1000 320">
+                    </div>
+                    <!-- Keeping User's SVG Chart Placeholder - Static for now, can be made dynamic later with Chart.js canvas if user requests -->
+                    <div class="relative h-80 w-full" id="chart-container">
+                        <canvas id="costChart" style="width:100%; height:100%; display:none;"></canvas>
+                        <!-- Fallback SVG from User -->
+                        <svg class="h-full w-full overflow-visible absolute inset-0" preserveAspectRatio="none"
+                            viewBox="0 0 1000 320">
                             <defs>
                                 <linearGradient id="gradAWS" x1="0" x2="0" y1="0" y2="1">
                                     <stop offset="0%" stop-color="#FF9900" stop-opacity="0.2"></stop>
                                     <stop offset="100%" stop-color="#FF9900" stop-opacity="0"></stop>
                                 </linearGradient>
-                                <linearGradient id="gradTotal" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stop-color="#6366F1" stop-opacity="0.25"></stop>
-                                    <stop offset="100%" stop-color="#6366F1" stop-opacity="0"></stop>
+                                <linearGradient id="gradAzure" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#0078D4" stop-opacity="0.1"></stop>
+                                    <stop offset="100%" stop-color="#0078D4" stop-opacity="0"></stop>
                                 </linearGradient>
                             </defs>
-                            <!-- Solid Spend Area -->
-                            <path d="M0,320 H1000" fill="url(#gradTotal)"></path>
-                            <!-- Solid Spend Line -->
-                            <path d="M0,320 H1000" fill="none" stroke="#6366F1" stroke-linecap="round" stroke-width="4">
-                            </path>
-                            <!-- Forecast Line -->
-                            <path d="" fill="none" stroke="#8A8F98" stroke-width="2" stroke-dasharray="6,6"
-                                stroke-opacity="0.6"></path>
+                            <!-- Simple Mock Lines -->
+                            <path
+                                d="M0,280 C150,270 250,290 350,240 S550,220 650,230 S750,200 850,210 S950,250 1000,240 V320 H0 Z"
+                                fill="url(#gradAzure)"></path>
+                            <path class=""
+                                d="M0,280 C150,270 250,290 350,240 S550,220 650,230 S750,200 850,210 S950,250 1000,240"
+                                fill="none" stroke="#0078D4" stroke-opacity="0.5" stroke-width="2"></path>
+                            <path
+                                d="M0,250 C100,240 150,260 250,210 S350,180 450,190 S550,130 650,140 S750,110 850,120 S950,80 1000,90 V320 H0 Z"
+                                fill="url(#gradAWS)"></path>
+                            <path class="drop-shadow-[0_0_10px_rgba(255,153,0,0.4)]"
+                                d="M0,250 C100,240 150,260 250,210 S350,180 450,190 S550,130 650,140 S750,110 850,120 S950,80 1000,90"
+                                fill="none" stroke="#FF9900" stroke-linecap="round" stroke-width="3"></path>
                         </svg>
+                        <div
+                            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-muted-text text-sm bg-black/50 p-2 rounded">
+                            Static Chart Placeholder</div>
                     </div>
                 </div>
+                <!-- Distribution -->
                 <div
                     class="col-span-12 lg:col-span-4 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm flex flex-col justify-between">
                     <h3 class="text-lg font-semibold text-white mb-2">Provider Distribution</h3>
                     <div class="flex flex-col items-center justify-center relative py-6">
                         <div class="relative h-48 w-48">
-                            <svg id="donut-chart-svg" class="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
+                            <svg class="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" fill="none" r="15.915" stroke="#1F2430" stroke-width="3">
                                 </circle>
+                                <!-- AWS Circle -->
                                 <circle class="transition-all hover:stroke-[#FF9900]" cx="18" cy="18" fill="none"
-                                    r="15.915" stroke="#FF9900" stroke-dasharray="0 100" stroke-width="3"></circle>
+                                    r="15.915" stroke="#FF9900" stroke-dasharray="0 100" stroke-width="3"
+                                    id="circle-aws"></circle>
+                                <!-- Azure Circle -->
                                 <circle class="transition-all hover:stroke-[#0078D4]" cx="18" cy="18" fill="none"
-                                    r="15.915" stroke="#0078D4" stroke-dasharray="0 100" stroke-dashoffset="0"
-                                    stroke-width="3"></circle>
+                                    r="15.915" stroke="#0078D4" stroke-dasharray="0 100" stroke-dashoffset="-0"
+                                    stroke-width="3" id="circle-azure"></circle>
+                                <!-- GCP Circle -->
                                 <circle class="transition-all hover:stroke-[#DB4437]" cx="18" cy="18" fill="none"
-                                    r="15.915" stroke="#DB4437" stroke-dasharray="0 100" stroke-dashoffset="0"
-                                    stroke-width="3"></circle>
+                                    r="15.915" stroke="#DB4437" stroke-dasharray="0 100" stroke-dashoffset="-0"
+                                    stroke-width="3" id="circle-gcp"></circle>
                             </svg>
                             <div class="absolute inset-0 flex flex-col items-center justify-center">
                                 <span class="text-xs text-muted-text uppercase tracking-wider font-medium">Total
                                     Spend</span>
-                                <span id="donut-total-text"
-                                    class="text-2xl font-bold text-white tracking-tight mt-1">$0.00</span>
+                                <span class="text-2xl font-bold text-white tracking-tight mt-1"
+                                    id="dist-total">...</span>
                             </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-border-dark">
-                        <div class="text-center"><span class="block text-[10px] text-muted-text mb-1">AWS</span><span
-                                class="block text-sm font-bold text-white">0%</span></div>
-                        <div class="text-center border-l border-border-dark"><span
-                                class="block text-[10px] text-muted-text mb-1">Azure</span><span
-                                class="block text-sm font-bold text-white">0%</span></div>
-                        <div class="text-center border-l border-border-dark"><span
-                                class="block text-[10px] text-muted-text mb-1">GCP</span><span
-                                class="block text-sm font-bold text-white">0%</span></div>
+                        <div class="text-center">
+                            <span class="block text-[10px] text-muted-text mb-1">AWS</span>
+                            <span class="block text-sm font-bold text-white" id="dist-aws-pct">0%</span>
+                        </div>
+                        <div class="text-center border-l border-border-dark">
+                            <span class="block text-[10px] text-muted-text mb-1">Azure</span>
+                            <span class="block text-sm font-bold text-white" id="dist-azure-pct">0%</span>
+                        </div>
+                        <div class="text-center border-l border-border-dark">
+                            <span class="block text-[10px] text-muted-text mb-1">GCP</span>
+                            <span class="block text-sm font-bold text-white" id="dist-gcp-pct">0%</span>
+                        </div>
                     </div>
                 </div>
+                <!-- Top Services -->
                 <div class="col-span-12 lg:col-span-8 rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-lg font-semibold text-white">Top Services Breakdown</h3>
                         <button class="text-xs text-primary hover:text-white font-medium transition-colors">View
                             Report</button>
                     </div>
-                    <div id="top-services-list" class="space-y-6">
-                        <span class="text-sm text-muted-text">Loading data...</span>
+                    <div class="space-y-6" id="top-services-list">
+                        <!-- Items will be injected here by dashboard.js -->
+                        <div class="text-center text-muted-text py-4">Loading services...</div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
-    <script src="dashboard.js"></script>
+        <!-- Alert Modal -->
+        <div id="alert-modal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+            <div class="w-full max-w-md transform rounded-xl border border-border-dark bg-card-dark p-6 shadow-2xl transition-all scale-95 duration-300"
+                id="alert-modal-content">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-500">warning</span>
+                        System Alerts
+                    </h3>
+                    <button id="close-modal" class="text-muted-text hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="space-y-3" id="alert-list">
+                    <!-- Alerts injected here -->
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button id="btn-resolve"
+                        class="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors">
+                        Acknowledge
+                    </button>
+                </div>
+            </div>
+        </div>
+        <script src="dashboard.js"></script>
 </body>
 
 </html>
