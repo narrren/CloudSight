@@ -65,6 +65,19 @@ If you see an error like `User is not authorized to perform: ce:GetCostAndUsage`
 **Root User Note:**
 If you are using the Root account (not recommended), you must enable **"IAM User and Role Access to Billing Information"** in your Account Settings.
 
+### Azure "Microsoft.CostManagement/Query/read" Access Denied
+If you receive an error stating your app registration does not have authorization to perform action `Microsoft.CostManagement/Query/read`, your App Registration lacks permission to view cost data at the subscription level.
+
+**Quick Fix:**
+1. Go to the Azure Portal -> **Subscriptions**.
+2. Click on your subscription name.
+3. In the left menu, click **Access control (IAM)**.
+4. Click **Add** -> **Add role assignment**.
+5. Search for and select the **Cost Management Reader** role, then click Next.
+6. Under "Assign access to", select **User, group, or service principal**.
+7. Click **Select members**, search for the name of your App Registration, and select it.
+8. Click **Review + assign**. Wait 1-2 minutes for the role to propagate.
+
 ## Architecture
 - **Manifest V3**: Secure and performant extension architecture.
 - **Webpack**: Bundles modular code (AWS SDK, Jose, Chart.js) for the browser.
